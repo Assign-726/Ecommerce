@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin Dashboard - ClothingStore{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#2563eb',
+                        'primary-dark': '#1d4ed8',
+                        secondary: '#f59e0b',
+                        'secondary-dark': '#d97706',
+                        accent: '#10b981',
+                        'accent-dark': '#059669',
+                        'gray-850': '#1f2937',
+                        'gray-750': '#374151',
+                        'admin-bg': '#f8fafc',
+                        'admin-sidebar': '#1e293b',
+                        'admin-sidebar-hover': '#334155'
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-in-out',
+                        'slide-in': 'slideIn 0.3s ease-out',
+                        'bounce-gentle': 'bounceGentle 2s infinite'
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' }
+                        },
+                        slideIn: {
+                            '0%': { transform: 'translateX(-10px)', opacity: '0' },
+                            '100%': { transform: 'translateX(0)', opacity: '1' }
+                        },
+                        bounceGentle: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-5px)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-admin-bg">
+    <div class="flex h-screen">
+        <!-- Mobile Menu Overlay -->
+        <div id="mobile-sidebar-overlay" class="fixed inset-0 z-50 lg:hidden transform translate-x-full transition-transform duration-300 ease-in-out">
+            <div class="flex h-full">
+                <div class="flex-1 bg-black bg-opacity-50" id="mobile-sidebar-backdrop"></div>
+                <div class="w-80 max-w-sm bg-admin-sidebar shadow-2xl">
+                    <div class="flex flex-col h-full">
+                        <!-- Mobile Sidebar Header -->
+                        <div class="flex items-center justify-between p-4 border-b border-gray-700">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 bg-gradient-to-br from-primary to-primary-dark rounded-lg flex items-center justify-center text-white font-bold text-sm">
+                                    A
+                                </div>
+                                <h2 class="text-lg font-bold text-white">Admin Panel</h2>
+                            </div>
+                            <button id="close-mobile-sidebar" class="p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors duration-300">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        
+                        <!-- Mobile Navigation -->
+                        <nav class="flex-1 overflow-y-auto py-4">
+                            <div class="px-4 py-2">
+                                <p class="text-gray-400 text-xs uppercase tracking-wider font-semibold">Main</p>
+                            </div>
+                            
+                            <a href="{% url 'admin_dashboard:dashboard_home' %}" class="flex items-center px-4 py-3 text-gray-300 hover:bg-admin-sidebar-hover hover:text-white transition-colors {% if request.resolver_match.url_name == 'dashboard_home' %}bg-admin-sidebar-hover text-white border-r-4 border-primary{% endif %}">
+                                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v6a2 2 0 01-2 2H10a2 2 0 01-2-2V5z"></path>
+                                </svg>
+                                Dashboard
+                            </a>
+                            
+                            <a href="{% url 'admin_dashboard:product_list' %}" class="flex items-center px-4 py-3 text-gray-300 hover:bg-admin-sidebar-hover hover:text-white transition-colors {% if 'product' in request.resolver_match.url_name %}bg-admin-sidebar-hover text-white border-r-4 border-primary{% endif %}">
+                                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                                </svg>
+                                Products
+                            </a>
+                            
+                            <a href="{% url 'admin_dashboard:category_list' %}" class="flex items-center px-4 py-3 text-gray-300 hover:bg-admin-sidebar-hover hover:text-white transition-colors {% if 'category' in request.resolver_match.url_name %}bg-admin-sidebar-hover text-white border-r-4 border-primary{% endif %}">
+                                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+                                </svg>
+                                Categories
+                            </a>
+                            
+                            <a href="{% url 'admin_dashboard:order_list' %}" class="flex items-center px-4 py-3 text-gray-300 hover:bg-admin-sidebar-hover hover:text-white transition-colors {% if 'order' in request.resolver_match.url_name %}bg-admin-sidebar-hover text-white border-r-4 border-primary{% endif %}">
+                                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M8 11v6h8v-6M8 11H6a2 2 0 00-2 2v6a2 2 0 002 2h12a2 2 0 002-2v-6a2 2 0 00-2-2h-2"></path>
+                                </svg>
+                                Orders
+                            </a>
+                            
+                            <a href="{% url 'admin_dashboard:coupon_list' %}" class="flex items-center px-4 py-3 text-gray-300 hover:bg-admin-sidebar-hover hover:text-white transition-colors {% if 'coupon' in request.resolver_match.url_name %}bg-admin-sidebar-hover text-white border-r-4 border-primary{% endif %}">
+                                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2m4-8h2m-10 4h2m-6-8H5a2 2 0 00-2 2v2m0 4v6a2 2 0 002 2h4v-6h2v6h4a2 2 0 002-2v-6m0 0h2m-2 0V9m0 0h-2m0 0V5a2 2 0 00-2-2h-4v6h-2V5H5a2 2 0 00-2 2v2h14z"></path>
+                                </svg>
+                                Coupons
+                            </a>
+                            
+                            <a href="{% url 'admin_dashboard:banner_list' %}" class="flex items-center px-4 py-3 text-gray-300 hover:bg-admin-sidebar-hover hover:text-white transition-colors {% if 'banner' in request.resolver_match.url_name %}bg-admin-sidebar-hover text-white border-r-4 border-primary{% endif %}">
+                                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                </svg>
+                                Banners
+                            </a>
+                            
+                            <a href="{% url 'admin_dashboard:customer_list' %}" class="flex items-center px-4 py-3 text-gray-300 hover:bg-admin-sidebar-hover hover:text-white transition-colors {% if 'customer' in request.resolver_match.url_name %}bg-admin-sidebar-hover text-white border-r-4 border-primary{% endif %}">
+                                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+                                </svg>
+                                Customers
+                            </a>
+                        </nav>
+                        
+                        <!-- Mobile User Info -->
+                        <div class="p-4 border-t border-gray-700">
+                            <div class="flex items-center space-x-3 mb-4">
+                                <div class="w-10 h-10 bg-gradient-to-br from-primary to-primary-dark rounded-full flex items-center justify-center text-white font-bold text-sm">
+                                    {{ user.username|first|upper }}
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-white font-medium truncate">{{ user.get_full_name|default:user.username }}</p>
+                                    <p class="text-gray-400 text-sm truncate">Administrator</p>
+                                </div>
+                            </div>
+                            <a href="{% url 'accounts:logout' %}" class="flex items-center justify-center w-full p-2 text-red-400 hover:bg-red-500 hover:text-white rounded-lg transition-colors duration-300">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                                </svg>
+                                <span class="text-sm font-medium">Logout</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Desktop Sidebar -->
+        <div class="hidden lg:flex w-64 bg-admin-sidebar text-white flex-shrink-0">
+            <div class="p-6">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-primary to-primary-dark rounded-lg flex items-center justify-center text-white font-bold text-lg">
+                        A
+                    </div>
+                    <h1 class="text-xl font-bold">Admin Panel</h1>
+                    <p class="text-gray-400 text-sm">ClothingStore</p>
+                </div>
+                
+                <nav class="mt-8">
+                    <div class="px-6 py-2">
+                        <p class="text-gray-400 text-xs uppercase tracking-wider font-semibold">Main</p>
+                    </div>
+                    
+                    <a href="{% url 'admin_dashboard:dashboard_home' %}" class="flex items-center px-6 py-3 text-gray-300 hover:bg-admin-sidebar-hover hover:text-white transition-colors {% if request.resolver_match.url_name == 'dashboard_home' %}bg-admin-sidebar-hover text-white border-r-4 border-primary{% endif %}">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v6a2 2 0 01-2 2H10a2 2 0 01-2-2V5z"></path>
+                        </svg>
+                        Dashboard
+                    </a>
+                    
+                    <div class="px-6 py-2 mt-6">
+                        <p class="text-gray-400 text-xs uppercase tracking-wider font-semibold">Catalog</p>
+                    </div>
+                    
+                    <a href="{% url 'admin_dashboard:product_list' %}" class="flex items-center px-6 py-3 text-gray-300 hover:bg-admin-sidebar-hover hover:text-white transition-colors {% if 'product' in request.resolver_match.url_name %}bg-admin-sidebar-hover text-white border-r-4 border-primary{% endif %}">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                        </svg>
+                        Products
+                    </a>
+                    
+                    <a href="{% url 'admin_dashboard:category_list' %}" class="flex items-center px-6 py-3 text-gray-300 hover:bg-admin-sidebar-hover hover:text-white transition-colors {% if 'category' in request.resolver_match.url_name %}bg-admin-sidebar-hover text-white border-r-4 border-primary{% endif %}">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+                        </svg>
+                        Categories
+                    </a>
+                    
+                    <div class="px-6 py-2 mt-6">
+                        <p class="text-gray-400 text-xs uppercase tracking-wider font-semibold">Content</p>
+                    </div>
+                    
+                    <a href="{% url 'admin_dashboard:banner_list' %}" class="flex items-center px-6 py-3 text-gray-300 hover:bg-admin-sidebar-hover hover:text-white transition-colors {% if 'banner' in request.resolver_match.url_name %}bg-admin-sidebar-hover text-white border-r-4 border-primary{% endif %}">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                        Banners
+                    </a>
+                    
+                    <div class="px-6 py-2 mt-6">
+                        <p class="text-gray-400 text-xs uppercase tracking-wider font-semibold">Sales</p>
+                    </div>
+                    
+                    <a href="{% url 'admin_dashboard:order_list' %}" class="flex items-center px-6 py-3 text-gray-300 hover:bg-admin-sidebar-hover hover:text-white transition-colors {% if 'order' in request.resolver_match.url_name %}bg-admin-sidebar-hover text-white border-r-4 border-primary{% endif %}">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M8 11v6h8v-6M8 11H6a2 2 0 00-2 2v6a2 2 0 002 2h12a2 2 0 002-2v-6a2 2 0 00-2-2h-2"></path>
+                        </svg>
+                        Orders
+                    </a>
+                    
+                    <a href="{% url 'admin_dashboard:coupon_list' %}" class="flex items-center px-6 py-3 text-gray-300 hover:bg-admin-sidebar-hover hover:text-white transition-colors {% if 'coupon' in request.resolver_match.url_name %}bg-admin-sidebar-hover text-white border-r-4 border-primary{% endif %}">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2m4-8h2m-10 4h2m-6-8H5a2 2 0 00-2 2v2m0 4v6a2 2 0 002 2h4v-6h2v6h4a2 2 0 002-2v-6m0 0h2m-2 0V9m0 0h-2m0 0V5a2 2 0 00-2-2h-4v6h-2V5H5a2 2 0 00-2 2v2h14z"></path>
+                        </svg>
+                        Coupons
+                    </a>
+                    
+                    <a href="{% url 'admin_dashboard:customer_list' %}" class="flex items-center px-6 py-3 text-gray-300 hover:bg-admin-sidebar-hover hover:text-white transition-colors {% if 'customer' in request.resolver_match.url_name %}bg-admin-sidebar-hover text-white border-r-4 border-primary{% endif %}">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+                        </svg>
+                        Customers
+                    </a>
+                </nav>
+                
+                <!-- User info at bottom -->
+                <div class="absolute bottom-0 w-64 p-6 border-t border-gray-700">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white text-sm font-medium">
+                            {{ user.username|first|upper }}
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-white text-sm font-medium">{{ user.username }}</p>
+                            <p class="text-gray-400 text-xs">Administrator</p>
+                        </div>
+                        <a href="{% url 'core:home' %}" class="text-gray-400 hover:text-white transition-colors" title="View Site">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- Top Header -->
+            <header class="bg-white shadow-sm border-b border-gray-200 px-4 sm:px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <!-- Mobile Menu Button -->
+                    <div class="flex items-center space-x-4">
+                        <button id="mobile-sidebar-toggle" class="lg:hidden p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors duration-300">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                            </svg>
+                        </button>
+                        <div>
+                        <h1 class="text-2xl font-bold text-gray-900">{% block page_title %}Dashboard{% endblock %}</h1>
+                        <p class="text-gray-600 text-sm">{% block page_description %}Welcome to your admin dashboard{% endblock %}</p>
+                    </div>
+                    
+                    <div class="flex items-center space-x-4">
+                        <!-- Notifications 
+                        <button class="relative p-2 text-gray-400 hover:text-gray-600 transition-colors">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM10.07 2.82l3.12 3.12c.944.945 1.48 2.227 1.48 3.56 0 1.334-.536 2.616-1.48 3.561l-3.12 3.12"></path>
+                            </svg>
+                            <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">3</span>
+                        </button>
+                        -->
+                        <!-- User Menu -->
+                        <div class="relative group">
+                            <button class="flex items-center space-x-2 text-gray-700 hover:text-gray-900 transition-colors">
+                                <div class="w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center text-sm font-medium">
+                                    {{ user.username|first|upper }}
+                                </div>
+                                <span class="hidden md:block">{{ user.username }}</span>
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </button>
+                            
+                            <div class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                                <a href="{% url 'core:home' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">
+                                    <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                                    </svg>
+                                    View Website
+                                </a>
+                                <form method="post" action="{% url 'accounts:logout' %}" class="block">
+                                    {% csrf_token %}
+                                    <button type="submit" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">
+                                        <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                                        </svg>
+                                        Logout
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- Messages -->
+            {% if messages %}
+                <div class="px-6 py-4">
+                    {% for message in messages %}
+                        <div class="animate-slide-in mb-4">
+                            {% if message.tags == 'success' %}
+                                <div class="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 text-green-800 px-6 py-4 rounded-lg shadow-sm flex items-center">
+                                    <svg class="w-5 h-5 mr-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    {{ message }}
+                                </div>
+                            {% elif message.tags == 'error' %}
+                                <div class="bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 text-red-800 px-6 py-4 rounded-lg shadow-sm flex items-center">
+                                    <svg class="w-5 h-5 mr-3 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    {{ message }}
+                                </div>
+                            {% elif message.tags == 'warning' %}
+                                <div class="bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-200 text-yellow-800 px-6 py-4 rounded-lg shadow-sm flex items-center">
+                                    <svg class="w-5 h-5 mr-3 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                                    </svg>
+                                    {{ message }}
+                                </div>
+                            {% else %}
+                                <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 text-blue-800 px-6 py-4 rounded-lg shadow-sm flex items-center">
+                                    <svg class="w-5 h-5 mr-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    {{ message }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            
+            <!-- Main Content Area -->
+            <main class="flex-1 overflow-y-auto bg-admin-bg p-4 sm:p-6">
+                {% block content %}
+                {% endblock %}
+            </main>
+        </div>
+    </div>
+    
+    <!-- JavaScript for Mobile Admin Dashboard -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Mobile sidebar functionality
+            const mobileSidebarToggle = document.getElementById('mobile-sidebar-toggle');
+            const mobileSidebarOverlay = document.getElementById('mobile-sidebar-overlay');
+            const mobileSidebarBackdrop = document.getElementById('mobile-sidebar-backdrop');
+            const closeMobileSidebar = document.getElementById('close-mobile-sidebar');
+            
+            function openMobileSidebar() {
+                if (mobileSidebarOverlay) {
+                    mobileSidebarOverlay.classList.remove('translate-x-full');
+                    document.body.style.overflow = 'hidden';
+                }
+            }
+            
+            function closeMobileSidebarFunc() {
+                if (mobileSidebarOverlay) {
+                    mobileSidebarOverlay.classList.add('translate-x-full');
+                    document.body.style.overflow = '';
+                }
+            }
+            
+            // Event listeners
+            if (mobileSidebarToggle) {
+                mobileSidebarToggle.addEventListener('click', openMobileSidebar);
+            }
+            
+            if (mobileSidebarBackdrop) {
+                mobileSidebarBackdrop.addEventListener('click', closeMobileSidebarFunc);
+            }
+            
+            if (closeMobileSidebar) {
+                closeMobileSidebar.addEventListener('click', closeMobileSidebarFunc);
+            }
+            
+            // Close mobile sidebar when clicking on navigation links
+            const mobileNavLinks = document.querySelectorAll('#mobile-sidebar-overlay a');
+            mobileNavLinks.forEach(link => {
+                link.addEventListener('click', closeMobileSidebarFunc);
+            });
+            
+            // Close mobile sidebar on escape key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closeMobileSidebarFunc();
+                }
+            });
+            
+            // Make tables responsive
+            const tables = document.querySelectorAll('table');
+            tables.forEach(table => {
+                if (!table.closest('.table-responsive')) {
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'table-responsive overflow-x-auto';
+                    table.parentNode.insertBefore(wrapper, table);
+                    wrapper.appendChild(table);
+                }
+            });
+            
+            // Add responsive classes to forms
+            const forms = document.querySelectorAll('form');
+            forms.forEach(form => {
+                const inputs = form.querySelectorAll('input, select, textarea');
+                inputs.forEach(input => {
+                    if (!input.classList.contains('w-full') && !input.classList.contains('w-auto')) {
+                        input.classList.add('w-full', 'sm:w-auto');
+                    }
+                });
+            });
+        });
+    </script>
+    
+    {% block extra_js %}
+    {% endblock %}
+</body>
+</html>

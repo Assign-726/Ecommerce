@@ -1,0 +1,201 @@
+<!-- templates/orders/payment.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Payment - ClothingStore{% endblock %}
+
+{% block extra_head %}
+<style>
+    .payment-container {
+        max-width: 600px;
+        margin: 2rem auto;
+        padding: 2rem;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .test-mode-banner {
+        background-color: #FFF3CD;
+        color: #856404;
+        padding: 1rem;
+        border-radius: 4px;
+        margin-bottom: 1.5rem;
+        text-align: center;
+    }
+    .btn-pay {
+        display: block;
+        width: 100%;
+        padding: 1rem;
+        background-color: #F4B400;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        font-size: 1.1rem;
+        cursor: pointer;
+        text-align: center;
+        margin-top: 1.5rem;
+        transition: background-color 0.2s;
+    }
+    .btn-pay:hover {
+        background-color: #E6A800;
+    }
+    .btn-pay:disabled {
+        background-color: #cccccc;
+        cursor: not-allowed;
+    }
+    .payment-amount {
+        font-size: 1.875rem;
+        font-weight: bold;
+        color: #1F2937;
+    }
+    .order-details {
+        background-color: #F9FAFB;
+        padding: 1.5rem;
+        border-radius: 0.5rem;
+        margin-bottom: 1.5rem;
+    }
+    .loading-spinner {
+        display: inline-block;
+        width: 1.5rem;
+        height: 1.5rem;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top-color: #fff;
+        animation: spin 1s ease-in-out infinite;
+        margin-right: 0.5rem;
+        vertical-align: middle;
+    }
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div class="card p-0 overflow-hidden">
+        <div class="px-6 py-5 bg-background-alt border-b border-border text-center">
+            <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-500 to-indigo-500">Complete Your Payment</h1>
+        </div>
+
+        <div class="p-6">
+            {% if debug %}
+            <div class="test-mode-banner">
+                <strong>Test Mode:</strong> Using test payment credentials. No real money will be charged.
+            </div>
+            {% endif %}
+
+            <div class="order-details rounded-lg">
+                <p class="text-text-secondary mb-1">Order #{{ order.order_number }}</p>
+                <p class="payment-amount">₹{{ order.total_amount|default:0|floatformat:2 }}</p>
+                <p class="text-sm text-text-subtle mt-2">Payment for your order at ClothingStore</p>
+            </div>
+
+            <button id="rzp-button" class="btn-primary w-full text-base py-3">
+                <span id="button-text">Pay Now</span>
+                <span id="button-spinner" class="loading-spinner hidden"></span>
+            </button>
+
+            <p class="text-sm text-text-subtle mt-4 text-center">
+                Secure payment powered by Razorpay
+            </p>
+
+            <div id="payment-error" class="text-red-600 text-sm mt-4 text-center hidden"></div>
+
+            <!-- Verification form (auto-submitted after successful payment) -->
+            <form id="verify-form" action="{% url 'orders:razorpay_verify' %}" method="POST" class="hidden">
+                {% csrf_token %}
+                <input type="hidden" name="razorpay_order_id" id="rzp_order_id">
+                <input type="hidden" name="razorpay_payment_id" id="rzp_payment_id">
+                <input type="hidden" name="razorpay_signature" id="rzp_signature">
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const orderId = '{{ order.razorpay_order_id|default:"" }}';
+        const amount = {{ amount_paise|default:0 }};
+        const keyId = '{{ razorpay_key_id|default:"" }}';
+        const customerName = '{{ customer_name|default:user.get_full_name|escapejs }}';
+        const customerEmail = '{{ customer_email|default:user.email|escapejs }}';
+        const customerPhone = '{{ customer_phone|default:""|escapejs }}';
+        
+        const button = document.getElementById('rzp-button');
+        const buttonText = document.getElementById('button-text');
+        const buttonSpinner = document.getElementById('button-spinner');
+        const errorDisplay = document.getElementById('payment-error');
+        
+        // Show loading state
+        function showLoading() {
+            button.disabled = true;
+            buttonText.textContent = 'Processing...';
+            buttonSpinner.classList.remove('hidden');
+        }
+        
+        // Hide loading state
+        function hideLoading() {
+            button.disabled = false;
+            buttonText.textContent = 'Pay Now';
+            buttonSpinner.classList.add('hidden');
+        }
+        
+        // Show error message
+        function showError(message) {
+            errorDisplay.textContent = message;
+            errorDisplay.classList.remove('hidden');
+            setTimeout(() => {
+                errorDisplay.classList.add('hidden');
+            }, 5000);
+        }
+        
+        // Handle payment
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            showLoading();
+            
+            try {
+                const options = {
+                    key: keyId,
+                    amount: amount,
+                    currency: 'INR',
+                    name: 'ClothingStore',
+                    description: 'Order #{{ order.order_number }}',
+                    order_id: orderId,
+                    handler: function(response) {
+                        // On successful payment, submit the verification form
+                        document.getElementById('rzp_order_id').value = response.razorpay_order_id;
+                        document.getElementById('rzp_payment_id').value = response.razorpay_payment_id;
+                        document.getElementById('rzp_signature').value = response.razorpay_signature;
+                        document.getElementById('verify-form').submit();
+                    },
+                    prefill: {
+                        name: customerName,
+                        email: customerEmail,
+                        contact: customerPhone
+                    },
+                    theme: {
+                        color: '#F4B400'
+                    },
+                    modal: {
+                        ondismiss: function() {
+                            hideLoading();
+                        }
+                    }
+                };
+                
+                // Initialize Razorpay
+                const rzp = new Razorpay(options);
+                rzp.open();
+                
+            } catch (error) {
+                console.error('Payment error:', error);
+                hideLoading();
+                showError('An error occurred while processing your payment. Please try again.');
+            }
+        });
+    });
+</script>
+{% endblock %}

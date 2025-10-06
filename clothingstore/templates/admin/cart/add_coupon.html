@@ -1,0 +1,244 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static admin_modify %}
+
+{% block extrahead %}
+{{ block.super }}
+<script src="{% static 'admin/js/vendor/jquery/jquery.js' %}"></script>
+{{ media }}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Toggle max discount field based on discount type
+        function toggleMaxDiscount() {
+            const discountType = document.querySelector('#id_discount_type');
+            const maxDiscountGroup = document.querySelector('.form-row.field-max_discount');
+            
+            if (discountType.value === 'percentage') {
+                maxDiscountGroup.style.display = 'block';
+            } else {
+                maxDiscountGroup.style.display = 'none';
+            }
+        }
+        
+        // Initial toggle
+        toggleMaxDiscount();
+        
+        // Add event listener
+        document.querySelector('#id_discount_type').addEventListener('change', toggleMaxDiscount);
+    });
+</script>
+{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+    /* Form styling */
+    .form-row {
+        padding: 15px;
+        margin: 10px 0;
+        background: #f8f8f8;
+        border: 1px solid #eee;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+    
+    .form-row label {
+        display: block;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    
+    .form-row input[type="text"],
+    .form-row input[type="number"],
+    .form-row input[type="datetime-local"],
+    .form-row select,
+    .form-row textarea {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        box-sizing: border-box;
+    }
+    
+    .form-row input[type="checkbox"] {
+        margin-right: 10px;
+    }
+    
+    .form-row .help {
+        color: #666;
+        font-size: 12px;
+        margin-top: 5px;
+        display: block;
+    }
+    
+    /* Button styling */
+    .submit-row {
+        padding: 15px;
+        background: #f8f8f8;
+        border-top: 1px solid #eee;
+        margin-top: 20px;
+        text-align: right;
+    }
+    
+    .button, input[type="submit"] {
+        background: #79aec8;
+        color: white;
+        padding: 8px 15px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        text-decoration: none;
+        font-size: 13px;
+        line-height: 20px;
+        margin-left: 10px;
+    }
+    
+    .button:hover, input[type="submit"]:hover {
+        background: #609ab6;
+    }
+    
+    .button.default, input[type="submit"].default {
+        background: #417690;
+    }
+    
+    .button.default:hover, input[type="submit"].default:hover {
+        background: #205067;
+    }
+    
+    /* Error styling */
+    .errorlist {
+        color: #ba2121;
+        margin: 0 0 10px 0;
+        padding: 0;
+        list-style: none;
+    }
+    
+    .errorlist li {
+        background: #fff0f0;
+        border: 1px solid #ffc9c9;
+        padding: 5px 10px;
+        border-radius: 4px;
+        margin-top: 5px;
+    }
+    
+    /* Field errors */
+    .field-error {
+        color: #ba2121;
+        font-size: 12px;
+        margin-top: 5px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    <h1>{% if form.instance.pk %}Edit Coupon{% else %}Add New Coupon{% endif %}</h1>
+    
+    {% if form.errors %}
+    <p class="errornote">
+        {% if form.errors|length == 1 %}
+            Please correct the error below.
+        {% else %}
+            Please correct the errors below.
+        {% endif %}
+    </p>
+    {% endif %}
+    
+    <form method="post" id="coupon_form" novalidate>
+        {% csrf_token %}
+        
+        <div class="form-row field-code">
+            {{ form.code.label_tag }}
+            {{ form.code }}
+            {{ form.code.errors }}
+            <p class="help">Enter a unique coupon code (letters and numbers only, no spaces).</p>
+        </div>
+        
+        <div class="form-row field-description">
+            {{ form.description.label_tag }}
+            {{ form.description }}
+            {{ form.description.errors }}
+            <p class="help">A brief description of this coupon (visible to admins only).</p>
+        </div>
+        
+        <div class="form-row field-discount_type">
+            {{ form.discount_type.label_tag }}
+            {{ form.discount_type }}
+            {{ form.discount_type.errors }}
+        </div>
+        
+        <div class="form-row field-discount_value">
+            {{ form.discount_value.label_tag }}
+            {{ form.discount_value }}
+            {{ form.discount_value.errors }}
+            <p class="help" id="discount_help">
+                {% if form.discount_type.value == 'percentage' %}
+                    Enter the percentage discount (e.g., 10 for 10% off).
+                {% else %}
+                    Enter the fixed amount discount (e.g., 5 for $5 off).
+                {% endif %}
+            </p>
+        </div>
+        
+        <div class="form-row field-min_order_amount">
+            {{ form.min_order_amount.label_tag }}
+            {{ form.min_order_amount }}
+            {{ form.min_order_amount.errors }}
+            <p class="help">Minimum order amount required to use this coupon (leave as 0 for no minimum).</p>
+        </div>
+        
+        <div class="form-row field-max_discount">
+            {{ form.max_discount.label_tag }}
+            {{ form.max_discount }}
+            {{ form.max_discount.errors }}
+            <p class="help">Maximum discount amount (for percentage discounts only).</p>
+        </div>
+        
+        <div class="form-row field-valid_from">
+            {{ form.valid_from.label_tag }}
+            {{ form.valid_from }}
+            {{ form.valid_from.errors }}
+        </div>
+        
+        <div class="form-row field-valid_to">
+            {{ form.valid_to.label_tag }}
+            {{ form.valid_to }}
+            {{ form.valid_to.errors }}
+        </div>
+        
+        <div class="form-row field-usage_limit">
+            {{ form.usage_limit.label_tag }}
+            {{ form.usage_limit }}
+            {{ form.usage_limit.errors }}
+            <p class="help">Maximum number of times this coupon can be used (0 for unlimited).</p>
+        </div>
+        
+        <div class="form-row field-is_active">
+            {{ form.is_active }}
+            {{ form.is_active.label_tag }}
+            {{ form.is_active.errors }}
+        </div>
+        
+        <div class="submit-row">
+            <a href="{% url 'admin:cart_coupon_changelist' %}" class="button">{% trans 'Cancel' %}</a>
+            <input type="submit" value="{% trans 'Save' %}" class="default" name="_save">
+        </div>
+    </form>
+</div>
+
+<script>
+    // Update help text when discount type changes
+    document.getElementById('id_discount_type').addEventListener('change', function() {
+        const helpText = document.getElementById('discount_help');
+        if (this.value === 'percentage') {
+            helpText.textContent = 'Enter the percentage discount (e.g., 10 for 10% off).';
+        } else {
+            helpText.textContent = 'Enter the fixed amount discount (e.g., 5 for $5 off).';
+        }
+    });
+    
+    // Auto-format coupon code to uppercase
+    document.getElementById('id_code').addEventListener('input', function() {
+        this.value = this.value.toUpperCase();
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,212 @@
+{% extends 'admin_dashboard/base.html' %}
+{% load humanize %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="mb-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-bold">Coupon Usage: {{ coupon.code }}</h1>
+                <p class="text-gray-600">Detailed usage statistics and history</p>
+            </div>
+            <a href="{% url 'admin_dashboard:coupon_list' %}" 
+               class="text-indigo-600 hover:text-indigo-800">
+                &larr; Back to Coupons
+            </a>
+        </div>
+        
+        <!-- Coupon Summary -->
+        <div class="mt-6 bg-white rounded-lg shadow-sm p-6 mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div class="text-center p-4 border rounded-lg">
+                    <div class="text-2xl font-bold text-indigo-600">{{ coupon.times_used|default:0 }}</div>
+                    <div class="text-sm text-gray-500">Times Used</div>
+                </div>
+                <div class="text-center p-4 border rounded-lg">
+                    <div class="text-2xl font-bold text-green-600">
+                        {% if coupon.discount_type == 'percentage' %}
+                            {{ coupon.discount_value }}%
+                        {% else %}
+                            ₹{{ coupon.discount_value|floatformat:2|intcomma }}
+                        {% endif %}
+                    </div>
+                    <div class="text-sm text-gray-500">Discount</div>
+                </div>
+                <div class="text-center p-4 border rounded-lg">
+                    <div class="text-2xl font-bold text-blue-600">
+                        {% if coupon.usage_limit %}
+                            {{ coupon.usage_limit|floatformat:0|intcomma }}
+                        {% else %}
+                            ∞
+                        {% endif %}
+                    </div>
+                    <div class="text-sm text-gray-500">Usage Limit</div>
+                </div>
+                <div class="text-center p-4 border rounded-lg">
+                    <div class="text-2xl font-bold 
+                        {% if coupon.is_active and coupon.valid_to >= now %}
+                            text-green-600">Active
+                        {% else %}
+                            text-red-600">Inactive
+                        {% endif %}
+                    </div>
+                    <div class="text-sm text-gray-500">Status</div>
+                </div>
+            </div>
+            
+            <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="text-sm font-medium text-gray-500">Validity Period</h3>
+                    <p class="mt-1">
+                        {{ coupon.valid_from|date:"M d, Y H:i" }} to 
+                        {{ coupon.valid_to|date:"M d, Y H:i" }}
+                    </p>
+                </div>
+                {% if coupon.min_order_amount %}
+                <div>
+                    <h3 class="text-sm font-medium text-gray-500">Minimum Order</h3>
+                    <p class="mt-1">₹{{ coupon.min_order_amount|floatformat:2|intcomma }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Usage Table -->
+    <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-medium">Recent Usage History</h2>
+            {% if coupon.description %}
+                <p class="text-sm text-gray-500 mt-1">{{ coupon.description }}</p>
+            {% endif %}
+        </div>
+        
+        {% if usage_history %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Discount</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Order Total</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for usage in usage_history %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {{ usage.applied_at|date:"M d, Y H:i" }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <a href="{% url 'admin_dashboard:order_detail_ajax' usage.order.id %}" 
+                                   class="text-indigo-600 hover:text-indigo-900">
+                                    #{{ usage.order.id }}
+                                </a>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">{{ usage.user.get_full_name|default:usage.user.username }}</div>
+                                <div class="text-sm text-gray-500">{{ usage.user.email }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm text-red-600">
+                                -₹{{ usage.discount_amount|floatformat:2|intcomma }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900">
+                                ₹{{ usage.order.total_amount|floatformat:2|intcomma }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            {% if usage_history.has_other_pages %}
+            <div class="bg-white px-6 py-3 flex items-center justify-between border-t border-gray-200">
+                <div class="flex-1 flex justify-between sm:hidden">
+                    {% if usage_history.has_previous %}
+                        <a href="?page={{ usage_history.previous_page_number }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                            Previous
+                        </a>
+                    {% endif %}
+                    {% if usage_history.has_next %}
+                        <a href="?page={{ usage_history.next_page_number }}" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                            Next
+                        </a>
+                    {% endif %}
+                </div>
+                <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                    <div>
+                        <p class="text-sm text-gray-700">
+                            Showing <span class="font-medium">{{ usage_history.start_index }}</span> to 
+                            <span class="font-medium">{{ usage_history.end_index }}</span> of 
+                            <span class="font-medium">{{ usage_history.paginator.count }}</span> results
+                        </p>
+                    </div>
+                    <div>
+                        <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                            {% if usage_history.has_previous %}
+                                <a href="?page=1" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                    <span class="sr-only">First</span>
+                                    &laquo;
+                                </a>
+                                <a href="?page={{ usage_history.previous_page_number }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                    Previous
+                                </a>
+                            {% endif %}
+                            
+                            {% for i in usage_history.paginator.page_range %}
+                                {% if usage_history.number == i %}
+                                    <span class="relative inline-flex items-center px-4 py-2 border border-indigo-500 bg-indigo-50 text-sm font-medium text-indigo-600">
+                                        {{ i }}
+                                    </span>
+                                {% elif i > usage_history.number|add:'-3' and i < usage_history.number|add:'3' %}
+                                    <a href="?page={{ i }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                        {{ i }}
+                                    </a>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if usage_history.has_next %}
+                                <a href="?page={{ usage_history.next_page_number }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                    Next
+                                </a>
+                                <a href="?page={{ usage_history.paginator.num_pages }}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                    <span class="sr-only">Last</span>
+                                    &raquo;
+                                </a>
+                            {% endif %}
+                        </nav>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+        {% else %}
+            <div class="px-6 py-12 text-center">
+                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <h3 class="mt-2 text-sm font-medium text-gray-900">No usage history</h3>
+                <p class="mt-1 text-sm text-gray-500">This coupon hasn't been used yet.</p>
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Action Buttons -->
+    <div class="mt-6 flex justify-between">
+        <a href="{% url 'admin_dashboard:coupon_edit' coupon.id %}" 
+           class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+            Edit Coupon
+        </a>
+        
+        <form method="post" action="{% url 'admin_dashboard:coupon_toggle_status' coupon.id %}" class="inline">
+            {% csrf_token %}
+            <button type="submit" 
+                    class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white {% if coupon.is_active %}bg-red-600 hover:bg-red-700 focus:ring-red-500{% else %}bg-green-600 hover:bg-green-700 focus:ring-green-500{% endif %} focus:outline-none focus:ring-2 focus:ring-offset-2">
+                {{ coupon.is_active|yesno:'Deactivate,Activate' }} Coupon
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

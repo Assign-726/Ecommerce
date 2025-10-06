@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Wishlist - ClothingStore{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div class="text-center mb-10">
+        <h1 class="text-3xl font-bold tracking-tight">My Wishlist</h1>
+        <p class="mt-2 text-sm text-text-secondary">{{ total_items }} item{{ total_items|pluralize }}</p>
+    </div>
+
+    {% if wishlist_items %}
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {% for item in wishlist_items %}
+            <div class="card group relative">
+                <a href="{{ item.product.get_absolute_url }}" class="block aspect-w-1 aspect-h-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none group-hover:opacity-75 lg:h-80">
+                    {% if item.product.images.first %}
+                        <img src="{{ item.product.images.first.image.url }}" alt="{{ item.product.name }}" class="h-full w-full object-cover object-center lg:h-full lg:w-full">
+                    {% else %}
+                        <div class="h-full w-full bg-background-alt flex items-center justify-center">
+                            <svg class="w-10 h-10 text-text-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        </div>
+                    {% endif %}
+                </a>
+                <div class="mt-4 flex justify-between">
+                    <div>
+                        <h3 class="text-sm font-medium">
+                            <a href="{{ item.product.get_absolute_url }}">
+                                <span aria-hidden="true" class="absolute inset-0"></span>
+                                {{ item.product.name }}
+                            </a>
+                        </h3>
+                        <p class="mt-1 text-sm text-text-secondary">{{ item.product.category.name }}</p>
+                    </div>
+                    <p class="text-sm font-semibold">₹{{ item.product.get_price }}</p>
+                </div>
+                <!-- Wishlist remove button -->
+                <button onclick="toggleWishlist({{ item.product.id }}, this, event)"
+                        class="absolute top-3 right-3 z-10 flex items-center justify-center w-8 h-8 bg-background rounded-full text-text-primary transition">
+                    <svg class="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="text-center mt-12">
+            <a href="{% url 'products:list' %}" class="btn-secondary">Continue Shopping</a>
+        </div>
+    {% else %}
+        <!-- Empty Wishlist -->
+        <div class="text-center py-16">
+            <div class="w-24 h-24 bg-background-alt rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg class="w-10 h-10 text-text-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+            </div>
+            <h2 class="text-2xl font-semibold">Your wishlist is empty</h2>
+            <p class="text-text-secondary mt-2 max-w-md mx-auto">
+                Looks like you haven't added anything to your wishlist yet. Start exploring and save your favorites!
+            </p>
+            <div class="mt-8">
+                <a href="{% url 'products:list' %}" class="btn-primary">Start Shopping</a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Include the wishlist toggle script -->
+<script>
+    function toggleWishlist(productId, button, event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const url = `/api/wishlist/toggle/${productId}/`;
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken,
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                // In the context of the wishlist page, 'removed' means we should remove the card
+                if (data.action === 'removed') {
+                    const card = button.closest('.card');
+                    if (card) {
+                        card.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                        card.style.opacity = '0';
+                        card.style.transform = 'scale(0.95)';
+                        setTimeout(() => {
+                            card.remove();
+                            // Update the count and check if the wishlist is now empty
+                            const totalItemsElem = document.querySelector('.text-text-secondary');
+                            if (totalItemsElem) {
+                                let count = parseInt(totalItemsElem.textContent.split(' ')[0]);
+                                count = Math.max(0, count - 1);
+                                totalItemsElem.textContent = `${count} item${count !== 1 ? 's' : ''}`;
+                                if (count === 0) {
+                                    // Use a small delay to ensure the DOM is updated before reloading
+                                    setTimeout(() => window.location.reload(), 100);
+                                }
+                            }
+                        }, 300);
+                    }
+                }
+                // Update wishlist count in the header
+                if (document.getElementById('wishlist-count')) {
+                    document.getElementById('wishlist-count').outerHTML = data.wishlist_count_html;
+                }
+            } else {
+                console.error('Failed to toggle wishlist:', data.message);
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+</script>
+{% endblock %}

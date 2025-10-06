@@ -1,0 +1,46 @@
+/* Style for size management in admin */
+.inline-group .tabular tr.has_original td { padding: 8px; }
+.inline-group .tabular tr.add-row td { padding: 8px; }
+
+/* Style for the size selector */
+.field-size select { width: 150px !important; }
+
+/* Style for the quantity input */
+.field-quantity input { width: 80px !important; }
+
+/* Highlight active sizes */
+.size-active { font-weight: bold; }
+
+/* Style for the size type badges */
+.size-type-badge {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: normal;
+    margin-left: 8px;
+    background: #f0f0f0;
+    color: #666;
+}
+
+/* Style for the size management header */
+.size-management-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+/* Style for the add size button */
+.add-size-btn {
+    background: #79aec8;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.add-size-btn:hover {
+    background: #609ab6;
+}

@@ -1,0 +1,97 @@
+<!-- templates/orders/checkout.html -->
+{% extends 'base.html' %}
+
+{% block title %}Checkout - ClothingStore{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 lg:px-6 py-10 lg:py-12">
+    <div class="text-center mb-8">
+        <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-500 to-indigo-500">Checkout</h1>
+        <p class="text-sm text-text-subtle mt-1">Shipping • Payment</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-12">
+        <!-- Shipping Information -->
+        <div class="lg:col-span-3">
+            <h2 class="text-lg font-semibold mb-4">Shipping Information</h2>
+            <form method="POST" class="space-y-4">
+                {% csrf_token %}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input type="text" name="shipping_name" required placeholder="Full Name" value="{{ initial.shipping_name|default:'' }}" class="input">
+                    <input type="email" name="shipping_email" placeholder="Email" value="{{ initial.shipping_email|default:user.email }}" required class="input">
+                </div>
+                <input type="tel" name="shipping_phone" required placeholder="Phone" value="{{ initial.shipping_phone|default:'' }}" class="input">
+                <textarea name="shipping_address" required rows="3" placeholder="Address" class="input">{{ initial.shipping_address|default:'' }}</textarea>
+                <select name="shipping_country" class="input">
+                    {% with c=initial.shipping_country|default:'US' %}
+                    <option value="US" {% if c == 'US' %}selected{% endif %}>United States</option>
+                    <option value="IN" {% if c == 'IN' %}selected{% endif %}>India</option>
+                    <option value="UK" {% if c == 'UK' %}selected{% endif %}>United Kingdom</option>
+                    <option value="CA" {% if c == 'CA' %}selected{% endif %}>Canada</option>
+                    <option value="AU" {% if c == 'AU' %}selected{% endif %}>Australia</option>
+                    {% endwith %}
+                </select>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <input type="text" name="shipping_city" required placeholder="City" value="{{ initial.shipping_city|default:'' }}" class="input">
+                    <input type="text" name="shipping_state" required placeholder="State" value="{{ initial.shipping_state|default:'' }}" class="input">
+                    <input type="text" name="shipping_zip_code" required placeholder="ZIP Code" value="{{ initial.shipping_zip_code|default:'' }}" class="input">
+                </div>
+                <button type="submit" class="btn-primary w-full mt-6">Continue to Payment</button>
+            </form>
+        </div>
+
+        <!-- Order Summary -->
+        <div class="lg:col-span-2">
+            <div class="bg-background-alt border border-border rounded-lg p-6 lg:sticky lg:top-28">
+                <h2 class="text-lg font-semibold mb-4">Order Summary</h2>
+                {% if cart and cart.items.all %}
+                <div class="space-y-3">
+                    {% for item in cart.items.all %}
+                        <div class="flex justify-between items-center text-sm">
+                            <div class="flex items-center gap-3">
+                                <img src="{{ item.product.get_thumbnail_url }}" class="w-12 h-12 object-cover rounded-md">
+                                <div>
+                                    <p class="font-medium">{{ item.product.name }}</p>
+                                    <p class="text-text-subtle text-xs">Qty: {{ item.quantity }}</p>
+                                </div>
+                            </div>
+                            <span class="font-medium">₹{{ item.get_total_price }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+                {% if cart.applied_coupon %}
+                <div class="mt-4">
+                    <div class="flex items-center justify-between text-xs">
+                        <span class="text-text-secondary">Applied coupon</span>
+                        <span class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200">{{ cart.applied_coupon.coupon.code }}</span>
+                    </div>
+                </div>
+                {% endif %}
+                <div class="mt-6 pt-4 border-t border-border space-y-2 text-sm">
+                    <div class="flex justify-between text-text-secondary">
+                        <span>Subtotal</span>
+                        <span>₹{{ cart.total_price }}</span>
+                    </div>
+                    {% if cart.applied_coupon %}
+                    <div class="flex justify-between text-text-secondary">
+                        <span>Discount</span>
+                        <span>-₹{{ cart.applied_coupon.discount_amount }}</span>
+                    </div>
+                    {% endif %}
+                    <div class="flex justify-between text-text-secondary">
+                        <span>Shipping</span>
+                        <span>Free</span>
+                    </div>
+                    <div class="flex justify-between font-semibold text-base mt-2">
+                        <span>Total</span>
+                        <span>₹{% if cart.applied_coupon %}{{ cart.get_total_after_discount }}{% else %}{{ cart.total_price }}{% endif %}</span>
+                    </div>
+                </div>
+                {% else %}
+                <div class="text-sm text-text-secondary">Your cart is empty.</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

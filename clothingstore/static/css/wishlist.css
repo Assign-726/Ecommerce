@@ -1,0 +1,48 @@
+/* Wishlist page enhancements */
+
+/* Card subtle lift and glow */
+.wishlist-card {
+  transition: transform 0.35s ease, box-shadow 0.35s ease;
+}
+.wishlist-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 25px 40px -10px rgba(0,0,0,0.15);
+}
+
+/* Image zoom mask */
+.wishlist-image img {
+  transition: transform 0.7s ease;
+}
+.wishlist-card:hover .wishlist-image img {
+  transform: scale(1.06);
+}
+
+/* Fancy badges */
+.badge-sale {
+  background: linear-gradient(90deg, #ef4444, #dc2626);
+  box-shadow: 0 10px 20px rgba(220,38,38,0.35);
+}
+
+/* Floating remove button */
+.btn-remove {
+  transform: translateY(-6px);
+  transition: all 0.25s ease;
+}
+.wishlist-card:hover .btn-remove {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Empty state improvements */
+.wishlist-empty-icon {
+  background: radial-gradient(120px 120px at 50% 40%, #ffffff 0%, #f3f4f6 100%);
+}
+
+/* Button pulse on hover */
+.btn-gradient {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.btn-gradient:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 20px 40px rgba(79,70,229,0.25);
+}

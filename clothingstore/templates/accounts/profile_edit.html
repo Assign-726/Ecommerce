@@ -1,0 +1,321 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Edit Profile - {{ block.super }}{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/profile.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="bg-white shadow-xl rounded-2xl overflow-hidden">
+        <!-- Header -->
+        <div class="px-6 py-5 bg-gradient-to-r from-primary to-primary-dark sm:px-8">
+            <div class="flex items-center justify-between">
+                <h1 class="text-2xl font-bold text-white">Edit Profile</h1>
+                <a href="{% url 'accounts:profile' %}" class="text-white hover:text-gray-200 transition-colors">
+                    <span class="sr-only">Back to Profile</span>
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    </svg>
+                </a>
+            </div>
+            <p class="mt-1 text-sm text-primary-100">Update your personal and address information</p>
+        </div>
+        
+        <div class="px-6 py-8 sm:px-8">
+            <div class="max-w-3xl mx-auto">
+                <!-- Form -->
+                <form id="main-profile-form" method="post" enctype="multipart/form-data" class="space-y-8">
+                    {% csrf_token %}
+                    
+                    <!-- Profile Picture -->
+                    <div class="space-y-4 section-card p-6 hover-lift">
+                        <div class="flex items-center justify-between">
+                            <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                                <i class="fas fa-camera text-indigo-500"></i>
+                                Profile Photo
+                            </h2>
+                        </div>
+                        <div class="flex items-center gap-6">
+                            <div class="avatar-wrapper h-24 w-24">
+                                <img src="{% if profile.profile_picture %}{{ profile.profile_picture.url }}{% else %}{% static 'images/default-avatar.svg' %}{% endif %}"
+                                     alt="Profile picture"
+                                     class="h-full w-full object-cover"
+                                     id="profile-preview">
+                                <label for="id_profile_picture" class="avatar-edit-badge" title="Change photo">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h2l2-3h6l2 3h2a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9a2 2 0 012-2z" />
+                                    </svg>
+                                </label>
+                            </div>
+                            <input id="id_profile_picture" name="profile_picture" type="file" class="hidden" accept="image/*">
+                        </div>
+                        <p class="mt-2 input-help">JPG, GIF or PNG • Max size 5MB</p>
+                        {% if profile.profile_picture %}
+                        <button type="button"
+                                onclick="document.getElementById('delete-picture-form').submit()"
+                                class="mt-2 inline-flex items-center px-3 py-1.5 border border-red-300 shadow-sm text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                            <svg class="-ml-1 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                            Remove Photo
+                        </button>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Personal Information -->
+                    <div class="space-y-6 section-card p-6 hover-lift">
+                        <div class="flex items-center justify-between">
+                            <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                                <i class="fas fa-id-card text-indigo-500"></i>
+                                Personal Information
+                            </h2>
+                            <span class="badge-soft text-xs px-2 py-1 rounded-full">Required</span>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 gap-y-6 gap-x-6 sm:grid-cols-6">
+                            <div class="sm:col-span-3">
+                                <label for="id_first_name" class="block text-sm font-medium text-gray-700">First name <span class="text-red-500">*</span></label>
+                                <div class="mt-1">
+                                    {{ form.first_name }}
+                                </div>
+                                {% if form.first_name.errors %}
+                                    <p class="mt-2 text-sm text-red-600">{{ form.first_name.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="sm:col-span-3">
+                                <label for="id_last_name" class="block text-sm font-medium text-gray-700">Last name <span class="text-red-500">*</span></label>
+                                <div class="mt-1">
+                                    {{ form.last_name }}
+                                </div>
+                                {% if form.last_name.errors %}
+                                    <p class="mt-2 text-sm text-red-600">{{ form.last_name.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="sm:col-span-4">
+                                <label for="id_email" class="block text-sm font-medium text-gray-700">Email address <span class="text-red-500">*</span></label>
+                                <div class="mt-1 relative rounded-md shadow-sm">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                            <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+                                            <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+                                        </svg>
+                                    </div>
+                                    {{ form.email }}
+                                </div>
+                                {% if form.email.errors %}
+                                    <p class="mt-2 text-sm text-red-600">{{ form.email.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="sm:col-span-4">
+                                <label for="id_phone_number" class="block text-sm font-medium text-gray-700">Phone number</label>
+                                <div class="mt-1 relative rounded-md shadow-sm">
+                                    {{ form.phone_number }}
+                                </div>
+                                <p class="mt-2 input-help">Example: +1 (555) 123-4567</p>
+                                {% if form.phone_number.errors %}
+                                    <p class="mt-2 text-sm text-red-600">{{ form.phone_number.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="sm:col-span-3">
+                                <label for="id_date_of_birth" class="block text-sm font-medium text-gray-700">Date of Birth</label>
+                                <div class="mt-1 relative rounded-md shadow-sm">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm 0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" />
+                                        </svg>
+                                    </div>
+                                    {{ form.date_of_birth }}
+                                </div>
+                                {% if form.date_of_birth.errors %}
+                                    <p class="mt-2 text-sm text-red-600">{{ form.date_of_birth.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Address Information -->
+                    <div class="space-y-6 section-card p-6 hover-lift">
+                        <div class="flex items-center justify-between">
+                            <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                                <i class="fas fa-map-marker-alt text-indigo-500"></i>
+                                Personal Address
+                            </h2>
+                            <span class="text-xs text-gray-500">Used for shipping & billing</span>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 gap-y-6 gap-x-6 sm:grid-cols-6">
+                            <div class="sm:col-span-3">
+                                <label for="id_country" class="block text-sm font-medium text-gray-700">Country <span class="text-red-500">*</span></label>
+                                <div class="mt-1">
+                                    <select id="id_country" name="country" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50">
+                                        <option value="" disabled {% if not form.country.value %}selected{% endif %}>Select a country</option>
+                                        <option value="US" {% if form.country.value == 'US' %}selected{% endif %}>United States</option>
+                                        <option value="IN" {% if form.country.value == 'IN' %}selected{% endif %}>India</option>
+                                        <option value="UK" {% if form.country.value == 'UK' %}selected{% endif %}>United Kingdom</option>
+                                        <option value="CA" {% if form.country.value == 'CA' %}selected{% endif %}>Canada</option>
+                                        <option value="AU" {% if form.country.value == 'AU' %}selected{% endif %}>Australia</option>
+                                    </select>
+                                </div>
+                                {% if form.country.errors %}
+                                    <p class="mt-2 text-sm text-red-600">{{ form.country.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="sm:col-span-3">
+                                <label for="id_city" class="block text-sm font-medium text-gray-700">City <span class="text-red-500">*</span></label>
+                                <div class="mt-1">
+                                    {{ form.city }}
+                                </div>
+                                {% if form.city.errors %}
+                                    <p class="mt-2 text-sm text-red-600">{{ form.city.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="sm:col-span-3">
+                                <label for="id_state" class="block text-sm font-medium text-gray-700">State / Province <span class="text-red-500">*</span></label>
+                                <div class="mt-1">
+                                    {{ form.state }}
+                                </div>
+                                {% if form.state.errors %}
+                                    <p class="mt-2 text-sm text-red-600">{{ form.state.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="sm:col-span-3">
+                                <label for="id_postal_code" class="block text-sm font-medium text-gray-700">ZIP / Postal code <span class="text-red-500">*</span></label>
+                                <div class="mt-1">
+                                    {{ form.postal_code }}
+                                </div>
+                                {% if form.postal_code.errors %}
+                                    <p class="mt-2 text-sm text-red-600">{{ form.postal_code.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="sm:col-span-6">
+                                <label for="id_address_line1" class="block text-sm font-medium text-gray-700">Address <span class="text-red-500">*</span></label>
+                                <div class="mt-1 relative rounded-md shadow-sm">
+                                    {{ form.address_line1 }}
+                                </div>
+                                {% if form.address_line1.errors %}
+                                    <p class="mt-2 text-sm text-red-600">{{ form.address_line1.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="sm:col-span-6">
+                                <label for="id_address_line2" class="block text-sm font-medium text-gray-700">Apt, suite, etc. (optional)</label>
+                                <div class="mt-1 relative rounded-md shadow-sm">
+                                    {{ form.address_line2 }}
+                                </div>
+                                {% if form.address_line2.errors %}
+                                    <p class="mt-2 text-sm text-red-600">{{ form.address_line2.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Sticky Actions -->
+                    <div class="pt-6">
+                        <div class="sticky-actions -mx-6 sm:-mx-8 px-6 sm:px-8 py-4 flex items-center justify-end gap-3 border-t border-gray-100">
+                            <a href="{% url 'accounts:profile' %}" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+                                <svg class="-ml-1 mr-2 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                </svg>
+                                Back to Profile
+                            </a>
+                            <button type="submit" class="inline-flex items-center px-8 py-3 border border-transparent text-sm font-semibold rounded-lg shadow-sm text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary btn-gradient btn-pill">
+                                <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                </svg>
+                                Save Changes
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        {% if profile.profile_picture %}
+        <form id="delete-picture-form" method="post" action="{% url 'accounts:delete_profile_picture' %}" class="hidden">
+            {% csrf_token %}
+        </form>
+        {% endif %}
+        
+        <script>
+            // Preview uploaded profile picture
+            document.addEventListener('DOMContentLoaded', function() {
+                const profilePictureInput = document.getElementById('id_profile_picture');
+                const profilePreview = document.getElementById('profile-preview');
+                
+                if (profilePictureInput) {
+                    profilePictureInput.addEventListener('change', function(e) {
+                        const file = e.target.files[0];
+                        if (file) {
+                            // Check file size (max 5MB)
+                            if (file.size > 5 * 1024 * 1024) {
+                                alert('File size should not exceed 5MB');
+                                this.value = '';
+                                return;
+                            }
+                            
+                            // Check file type
+                            const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
+                            if (!validTypes.includes(file.type)) {
+                                alert('Only JPG, PNG, and GIF files are allowed');
+                                this.value = '';
+                                return;
+                            }
+                            
+                            // Preview image
+                            const reader = new FileReader();
+                            reader.onload = function(e) {
+                                profilePreview.src = e.target.result;
+                            };
+                            reader.readAsDataURL(file);
+                        }
+                    });
+                }
+                
+                // Form validation before submission
+                document.querySelector('#main-profile-form').addEventListener('submit', function(e) {
+                    const requiredFields = this.querySelectorAll('[required]');
+                    let isValid = true;
+                    
+                    requiredFields.forEach(field => {
+                        if (!field.value.trim()) {
+                            field.classList.add('border-red-500');
+                            isValid = false;
+                            
+                            // Add error message if not exists
+                            if (!field.nextElementSibling || !field.nextElementSibling.classList.contains('text-red-600')) {
+                                const error = document.createElement('p');
+                                error.className = 'mt-2 text-sm text-red-600';
+                                error.textContent = 'This field is required';
+                                field.parentNode.insertBefore(error, field.nextSibling);
+                            }
+                        } else {
+                            field.classList.remove('border-red-500');
+                            if (field.nextElementSibling && field.nextElementSibling.classList.contains('text-red-600')) {
+                                field.nextElementSibling.remove();
+                            }
+                        }
+                    });
+                    
+                    if (!isValid) {
+                        e.preventDefault();
+                        // Scroll to first error
+                        const firstError = this.querySelector('.border-red-500');
+                        if (firstError) {
+                            firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    }
+                });
+            </script>
+        </div>
+    </div>
+</div>
+{% endblock %}

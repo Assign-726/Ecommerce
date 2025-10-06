@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+
+{% block title %}Order #{{ order.order_number }} - ClothingStore{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <!-- Header -->
+    <div class="mb-8">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+                <a href="{% url 'orders:list' %}" class="inline-flex items-center text-sm font-medium text-text-secondary hover:text-text-primary mb-2">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                    Back to Orders
+                </a>
+                <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-500 to-indigo-500">Order #{{ order.order_number }}</h1>
+                <p class="text-sm text-text-secondary mt-1">Placed on {{ order.created_at|date:"F d, Y" }}</p>
+            </div>
+            <div class="flex-shrink-0">
+                <span class="inline-flex items-center gap-2 badge 
+                    {% if order.status == 'delivered' %}badge-success
+                    {% elif order.status == 'shipped' %}badge-info
+                    {% elif order.status == 'processing' %}badge-info
+                    {% elif order.status == 'pending' %}badge-warning
+                    {% elif order.status == 'cancelled' %}badge-danger
+                    {% else %}badge-secondary{% endif %}">
+                    <span class="w-2 h-2 rounded-full bg-current/80"></span>
+                    {{ order.get_status_display }}
+                </span>
+            </div>
+        </div>
+        <!-- Status timeline -->
+        <div class="mt-6">
+            {% with s=order.status %}
+            <div class="flex items-center">
+                <!-- Step 1 -->
+                <div class="flex flex-col items-center">
+                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold
+                        {% if s == 'pending' or s == 'processing' or s == 'shipped' or s == 'delivered' %} bg-indigo-600 text-white {% else %} bg-background-alt text-text-subtle {% endif %}">1</div>
+                    <span class="mt-2 text-[11px] text-text-secondary">Pending</span>
+                </div>
+                <div class="flex-1 h-0.5 mx-2
+                    {% if s == 'processing' or s == 'shipped' or s == 'delivered' %} bg-indigo-500 {% else %} bg-border {% endif %}"></div>
+                <!-- Step 2 -->
+                <div class="flex flex-col items-center">
+                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold
+                        {% if s == 'processing' or s == 'shipped' or s == 'delivered' %} bg-indigo-600 text-white {% else %} bg-background-alt text-text-subtle {% endif %}">2</div>
+                    <span class="mt-2 text-[11px] text-text-secondary">Processing</span>
+                </div>
+                <div class="flex-1 h-0.5 mx-2
+                    {% if s == 'shipped' or s == 'delivered' %} bg-indigo-500 {% else %} bg-border {% endif %}"></div>
+                <!-- Step 3 -->
+                <div class="flex flex-col items-center">
+                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold
+                        {% if s == 'shipped' or s == 'delivered' %} bg-indigo-600 text-white {% else %} bg-background-alt text-text-subtle {% endif %}">3</div>
+                    <span class="mt-2 text-[11px] text-text-secondary">Shipped</span>
+                </div>
+                <div class="flex-1 h-0.5 mx-2
+                    {% if s == 'delivered' %} bg-indigo-500 {% else %} bg-border {% endif %}"></div>
+                <!-- Step 4 -->
+                <div class="flex flex-col items-center">
+                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold
+                        {% if s == 'delivered' %} bg-indigo-600 text-white {% else %} bg-background-alt text-text-subtle {% endif %}">4</div>
+                    <span class="mt-2 text-[11px] text-text-secondary">Delivered</span>
+                </div>
+            </div>
+            {% endwith %}
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+        <!-- Left Column: Order Items & Timeline -->
+        <div class="lg:col-span-2 space-y-8">
+            <!-- Order Items -->
+            <div class="card">
+                <h2 class="card-header">Order Items ({{ order.items.count }})</h2>
+                <div class="divide-y divide-border">
+                    {% for item in order.items.all %}
+                        <div class="p-4 flex items-start gap-4">
+                            <img src="{{ item.product.get_thumbnail_url }}" alt="{{ item.product.name }}" class="w-20 h-24 object-cover rounded-md shadow-sm bg-background-alt">
+                            <div class="flex-1">
+                                <p class="font-semibold">{{ item.product.name }}</p>
+                                <p class="text-sm text-text-secondary">{{ item.product.category.name }}</p>
+                                <div class="text-sm text-text-subtle mt-1 flex flex-wrap items-center gap-x-4 gap-y-1">
+                                    <span>Qty: {{ item.quantity }}</span>
+                                    {% if item.size %}<span>Size: {{ item.size }}</span>{% endif %}
+                                    {% if item.color %}
+                                        <span class="inline-flex items-center gap-2">
+                                            <span>Color:</span>
+                                            <span class="inline-block w-3.5 h-3.5 rounded-full border border-border" style="background-color: {{ item.color|lower }}"></span>
+                                            <span class="text-xs text-text-secondary">{{ item.color }}</span>
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <p class="text-sm font-semibold">₹{{ item.price }}</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Right Column: Summary, Shipping, Payment -->
+        <div class="space-y-6 lg:sticky lg:top-24">
+            <!-- Order Summary -->
+            <div class="card">
+                <h2 class="card-header">Order Summary</h2>
+                <div class="p-4 space-y-3 text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-text-secondary">Subtotal</span>
+                        <span class="font-medium">₹{{ order.total_amount }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-text-secondary">Shipping</span>
+                        <span class="font-medium">FREE</span>
+                    </div>
+                    <div class="border-t border-border pt-3 mt-3">
+                        <div class="flex justify-between items-baseline">
+                            <span class="text-base font-semibold">Total</span>
+                            <span class="text-xl font-bold">₹{{ order.total_amount }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Shipping & Payment -->
+            <div class="card">
+                <div class="p-4">
+                    <h3 class="font-semibold mb-3">Shipping Address</h3>
+                    <address class="text-sm text-text-secondary not-italic">
+                        <strong class="text-text-primary">{{ order.shipping_name }}</strong><br>
+                        {{ order.shipping_address }}<br>
+                        {{ order.shipping_city }}, {{ order.shipping_state }} {{ order.shipping_zip_code }}
+                    </address>
+                </div>
+                <div class="border-t border-border p-4">
+                    <h3 class="font-semibold mb-3">Payment</h3>
+                    <div class="text-sm flex justify-between">
+                        <span class="text-text-secondary">Payment Status</span>
+                        <span class="font-medium 
+                            {% if order.payment_status == 'completed' %}text-green-600
+                            {% elif order.payment_status == 'pending' %}text-yellow-600
+                            {% else %}text-red-500{% endif %}">
+                            {{ order.payment_status|title }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="space-y-3">
+                {% if order.status in 'pending,processing' %}
+                    <form method="POST" action="{% url 'orders:cancel' order.order_number %}" onsubmit="return confirm('Are you sure you want to cancel this order?');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-danger w-full">Cancel Order</button>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

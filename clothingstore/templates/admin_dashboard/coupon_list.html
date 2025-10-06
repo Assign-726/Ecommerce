@@ -1,0 +1,135 @@
+{% extends 'admin_dashboard/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold">Coupon Management</h1>
+        <a href="{% url 'admin_dashboard:coupon_create' %}" 
+           class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">
+            + Create Coupon
+        </a>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white rounded shadow p-4 mb-6">
+        <form method="get" class="flex space-x-2">
+            <input type="text" name="q" value="{{ search_query }}" 
+                   class="flex-1 px-4 py-2 border rounded" 
+                   placeholder="Search coupons...">
+            <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded">
+                Search
+            </button>
+        </form>
+        <div class="flex space-x-2 mt-2">
+            <a href="?" class="px-3 py-1 border rounded {% if not status %}bg-gray-100{% endif %}">All</a>
+            <a href="?status=active" class="px-3 py-1 border rounded {% if status == 'active' %}bg-green-100{% endif %}">Active</a>
+            <a href="?status=expired" class="px-3 py-1 border rounded {% if status == 'expired' %}bg-red-100{% endif %}">Expired</a>
+            <a href="?status=scheduled" class="px-3 py-1 border rounded {% if status == 'scheduled' %}bg-blue-100{% endif %}">Scheduled</a>
+        </div>
+    </div>
+
+    <!-- Coupons Table -->
+    <div class="bg-white rounded shadow overflow-hidden">
+        <table class="min-w-full">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Code</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Discount</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Validity</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                {% for coupon in page_obj %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4">
+                        <div class="font-medium">{{ coupon.code }}</div>
+                        <div class="text-sm text-gray-500">{{ coupon.description|truncatechars:30 }}</div>
+                    </td>
+                    <td class="px-6 py-4">
+                        {% if coupon.discount_type == 'percentage' %}
+                            {{ coupon.discount_value }}%
+                        {% else %}
+                            ₹{{ coupon.discount_value }}
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm">{{ coupon.valid_from|date:"M d, Y" }} - {{ coupon.valid_to|date:"M d, Y" }}</div>
+                    </td>
+                    <td class="px-6 py-4">
+                        {% if coupon.is_active and coupon.valid_from <= now and coupon.valid_to >= now %}
+                            <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">Active</span>
+                        {% elif coupon.valid_to < now %}
+                            <span class="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800">Expired</span>
+                        {% else %}
+                            <span class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">Scheduled</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                        <div class="flex justify-end space-x-3">
+                            <a href="{% url 'admin_dashboard:coupon_edit' coupon.id %}" 
+                               class="text-indigo-600 hover:text-indigo-900"
+                               title="Edit">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                </svg>
+                            </a>
+                            <form method="post" action="{% url 'admin_dashboard:coupon_toggle_status' coupon.id %}" class="inline">
+                                {% csrf_token %}
+                                <button type="submit" 
+                                        class="text-{% if coupon.is_active %}red{% else %}green{% endif %}-600 hover:text-{% if coupon.is_active %}red{% else %}green{% endif %}-800"
+                                        title="{{ coupon.is_active|yesno:'Deactivate,Activate' }}">
+                                    {% if coupon.is_active %}
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636a9 9 0 010 12.728m0 0l-2.829-2.829m2.829 2.829L21 21M15.536 8.464a5 5 0 010 7.072m0 0l-2.829-2.829m-4.243 2.829a4.978 4.978 0 01-1.414-2.83m-1.392 9.02a9.966 9.966 0 01-2.913-2.558m-1.392 9.02H4.5a2.25 2.25 0 01-2.25-2.25V6.257c0-1.023.46-1.99 1.244-2.627a9.958 9.958 0 012.25-1.337m7.5 0a9.958 9.958 0 012.25 1.337 2.25 2.25 0 011.244 2.027v11.5a2.25 2.25 0 01-2.25 2.25h-9a2.25 2.25 0 01-2.25-2.25V6.257c0-1.023.46-1.99 1.244-2.627a9.958 9.958 0 012.25-1.337z"></path>
+                                        </svg>
+                                    {% else %}
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                        </svg>
+                                    {% endif %}
+                                </button>
+                            </form>
+                            <a href="{% url 'admin_dashboard:coupon_delete' coupon.id %}" 
+                               class="text-red-600 hover:text-red-900"
+                               title="Delete">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="px-6 py-4 text-center text-gray-500">No coupons found</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="mt-4 flex justify-center">
+        <nav class="flex items-center space-x-2">
+            {% if page_obj.has_previous %}
+                <a href="?page=1" class="px-3 py-1 border rounded">« First</a>
+                <a href="?page={{ page_obj.previous_page_number }}" class="px-3 py-1 border rounded">‹ Prev</a>
+            {% endif %}
+            
+            <span class="px-3 py-1">
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+            </span>
+            
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}" class="px-3 py-1 border rounded">Next ›</a>
+                <a href="?page={{ page_obj.paginator.num_pages }}" class="px-3 py-1 border rounded">Last »</a>
+            {% endif %}
+        </nav>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

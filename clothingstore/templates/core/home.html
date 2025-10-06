@@ -1,0 +1,271 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+{% if banners %}
+<!-- Enhanced Banner Carousel with Parallax Effect -->
+<section class="relative overflow-hidden">
+    <div class="swiper mySwiper">
+        <div class="swiper-wrapper">
+            {% for banner in banners %}
+            <div class="swiper-slide">
+                <div class="relative h-[100vh] overflow-hidden">
+                    <!-- Parallax Background -->
+                    <div class="absolute inset-0 transform scale-110" data-swiper-parallax="-23%">
+                        <img src="{{ banner.image.url }}" alt="{{ banner.title }}" class="w-full h-full object-cover">
+                    </div>
+                    <!-- Gradient Overlay -->
+                    <div class="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent"></div>
+                    <!-- Content -->
+                    <div class="absolute inset-0 flex items-center">
+                        <div class="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8">
+                            <div class="max-w-2xl text-white" data-swiper-parallax="-300">
+                                <h2 class="text-5xl sm:text-6xl lg:text-7xl font-bold mb-6 leading-tight animate-fade-in">
+                                    {{ banner.title }}
+                                </h2>
+                                <p class="text-xl sm:text-2xl opacity-90 mb-8 animate-slide-up" style="animation-delay: 0.3s;">
+                                    {{ banner.description }}
+                                </p>
+                                {% if banner.link_url %}
+                                <div class="animate-slide-up" style="animation-delay: 0.6s;">
+                                    <a href="{{ banner.link_url }}" class="inline-flex items-center px-8 py-4 bg-white text-black font-semibold text-lg rounded-full hover:bg-gray-100 transform hover:scale-105 transition-all duration-300 shadow-xl">
+                                        {{ banner.link_text|default:'Shop Now' }}
+                                        <svg class="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                                        </svg>
+                                    </a>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Scroll Indicator -->
+                    <div class="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
+                        <div class="w-6 h-10 border-2 border-white rounded-full flex justify-center">
+                            <div class="w-1 h-3 bg-white rounded-full mt-2 animate-pulse"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <!-- Custom Navigation -->
+        <div class="swiper-pagination !bottom-8"></div>
+        <div class="swiper-button-prev !left-8 !text-white !text-4xl"></div>
+        <div class="swiper-button-next !right-8 !text-white !text-4xl"></div>
+    </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  if (typeof Swiper !== 'undefined') {
+    new Swiper('.mySwiper', {
+      loop: true,
+      autoplay: { delay: 7000, disableOnInteraction: false },
+      speed: 1000,
+      effect: 'fade',
+      fadeEffect: { crossFade: true },
+      parallax: true,
+      pagination: { 
+        el: '.swiper-pagination', 
+        clickable: true,
+        renderBullet: function (index, className) {
+          return '<span class="' + className + ' !w-12 !h-1 !rounded-full !bg-white/50 !opacity-100 swiper-pagination-bullet-active:!bg-white"></span>';
+        }
+      },
+      navigation: { nextEl: '.swiper-button-next', prevEl: '.swiper-button-prev' },
+    });
+  }
+});
+</script>
+{% else %}
+<!-- Hero Section with Dynamic Background -->
+<section class="relative min-h-screen flex items-center justify-center overflow-hidden">
+    <!-- Animated Background -->
+    <div class="absolute inset-0 bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900">
+        <div class="absolute inset-0 bg-black/20"></div>
+        <!-- Floating Elements -->
+        <div class="absolute top-1/4 left-1/4 w-64 h-64 bg-white/10 rounded-full blur-xl animate-float"></div>
+        <div class="absolute top-3/4 right-1/4 w-48 h-48 bg-white/5 rounded-full blur-xl animate-float" style="animation-delay: -2s;"></div>
+        <div class="absolute top-1/2 left-3/4 w-32 h-32 bg-white/15 rounded-full blur-xl animate-float" style="animation-delay: -4s;"></div>
+    </div>
+    
+    <!-- Content -->
+    <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-white">
+        <h1 class="text-6xl sm:text-7xl lg:text-8xl font-bold tracking-tight leading-tight mb-8 animate-fade-in">
+            Where Style Meets<br>
+            <span class="bg-gradient-to-r from-pink-400 to-purple-400 bg-clip-text text-transparent animate-glow">
+                Innovation
+            </span>
+        </h1>
+        <p class="text-xl sm:text-2xl opacity-90 max-w-3xl mx-auto mb-12 animate-slide-up" style="animation-delay: 0.3s;">
+            Discover our curated collection of modern essentials. Premium quality, timeless design, and a commitment to excellence.
+        </p>
+        <div class="flex flex-col sm:flex-row gap-6 justify-center animate-slide-up" style="animation-delay: 0.6s;">
+            <a href="{% url 'products:list' %}" class="group relative inline-flex items-center px-8 py-4 bg-white text-black font-semibold text-lg rounded-full hover:bg-gray-100 transform hover:scale-105 transition-all duration-300 shadow-xl">
+                <span class="relative z-10">Shop New Arrivals</span>
+                <svg class="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                </svg>
+            </a>
+            <a href="#categories" class="inline-flex items-center px-8 py-4 border-2 border-white text-white font-semibold text-lg rounded-full hover:bg-white hover:text-black transform hover:scale-105 transition-all duration-300">
+                Explore Collections
+            </a>
+        </div>
+    </div>
+    
+    <!-- Scroll Indicator -->
+    <div class="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
+        <div class="w-6 h-10 border-2 border-white rounded-full flex justify-center">
+            <div class="w-1 h-3 bg-white rounded-full mt-2 animate-pulse"></div>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Enhanced Category Showcase -->
+<section id="categories" class="py-24 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+            <h2 class="text-5xl font-bold tracking-tight mb-4 bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+                Shop by Category
+            </h2>
+            <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+                Explore our carefully curated collections designed for the modern lifestyle.
+            </p>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            {% for category in categories %}
+                <a href="{% url 'products:list' %}?category={{ category.slug }}" class="group block">
+                    <div class="relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2">
+                        <!-- Image Container -->
+                        <div class="aspect-w-4 aspect-h-5 overflow-hidden">
+                            <img src="{{ category.image.url }}" alt="{{ category.name }}" class="w-full h-80 object-cover group-hover:scale-110 transition-transform duration-700">
+                            <!-- Gradient Overlay -->
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        </div>
+                        <!-- Content Overlay -->
+                        <div class="absolute bottom-0 left-0 right-0 p-6 text-white transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
+                            <h3 class="text-2xl font-bold mb-2">{{ category.name }}</h3>
+                            <p class="text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-100">
+                                Discover our {{ category.name|lower }} collection
+                            </p>
+                        </div>
+                        <!-- Hover Effect -->
+                        <div class="absolute inset-0 border-2 border-transparent group-hover:border-white/20 rounded-2xl transition-all duration-300"></div>
+                    </div>
+                </a>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Enhanced Featured Products -->
+{% if featured_products %}
+<section id="featured" class="py-24 bg-white relative overflow-hidden">
+    <!-- Background Pattern -->
+    <div class="absolute inset-0 opacity-5">
+        <div class="absolute inset-0" style="background-image: radial-gradient(circle at 2px 2px, #000 1px, transparent 0); background-size: 40px 40px;"></div>
+    </div>
+    
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+            <h2 class="text-5xl font-bold tracking-tight mb-4 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                Featured Products
+            </h2>
+            <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+                Handpicked items that define contemporary style and exceptional quality.
+            </p>
+        </div>
+        
+        <!-- Products Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
+            {% for product in featured_products %}
+                <div class="group relative">
+                    {% include 'products/partials/product_card.html' with product=product %}
+                </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Call to Action -->
+        <div class="text-center">
+            <a href="{% url 'products:list' %}" class="group relative inline-flex items-center px-12 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold text-lg rounded-full hover:from-purple-700 hover:to-pink-700 transform hover:scale-105 transition-all duration-300 shadow-xl">
+                <span class="relative z-10">View All Products</span>
+                <svg class="ml-3 w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                </svg>
+                <!-- Shine Effect -->
+                <div class="absolute inset-0 rounded-full bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+            </a>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Enhanced Newsletter Section -->
+<section class="py-24 bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 relative overflow-hidden">
+    <!-- Animated Background Elements -->
+    <div class="absolute inset-0">
+        <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-white/5 rounded-full blur-3xl animate-pulse"></div>
+        <div class="absolute bottom-1/4 right-1/4 w-64 h-64 bg-white/10 rounded-full blur-2xl animate-pulse" style="animation-delay: -1s;"></div>
+    </div>
+    
+    <div class="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <div class="mb-12">
+            <h2 class="text-5xl font-bold tracking-tight text-white mb-6">
+                Stay in the Loop
+            </h2>
+            <p class="text-xl text-white/80 max-w-2xl mx-auto">
+                Be the first to know about new arrivals, exclusive offers, and fashion insights.
+            </p>
+        </div>
+        
+        <form class="max-w-md mx-auto">
+            <div class="relative">
+                <input type="email" placeholder="Enter your email address" class="w-full px-6 py-4 text-lg rounded-full border-0 bg-white/10 backdrop-blur-sm text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50" required>
+                <button type="submit" class="absolute right-2 top-2 bottom-2 px-8 bg-white text-purple-900 font-semibold rounded-full hover:bg-gray-100 transform hover:scale-105 transition-all duration-300">
+                    Subscribe
+                </button>
+            </div>
+        </form>
+        
+        <p class="mt-6 text-sm text-white/60">
+            Join 10,000+ fashion enthusiasts. Unsubscribe anytime.
+        </p>
+    </div>
+</section>
+
+<!-- Stats Section -->
+<section class="py-16 bg-gray-900 text-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+            <div class="group">
+                <div class="text-4xl font-bold mb-2 bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent group-hover:scale-110 transition-transform duration-300">
+                    10K+
+                </div>
+                <div class="text-gray-400">Happy Customers</div>
+            </div>
+            <div class="group">
+                <div class="text-4xl font-bold mb-2 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent group-hover:scale-110 transition-transform duration-300">
+                    500+
+                </div>
+                <div class="text-gray-400">Products</div>
+            </div>
+            <div class="group">
+                <div class="text-4xl font-bold mb-2 bg-gradient-to-r from-green-400 to-blue-400 bg-clip-text text-transparent group-hover:scale-110 transition-transform duration-300">
+                    50+
+                </div>
+                <div class="text-gray-400">Countries</div>
+            </div>
+            <div class="group">
+                <div class="text-4xl font-bold mb-2 bg-gradient-to-r from-yellow-400 to-red-400 bg-clip-text text-transparent group-hover:scale-110 transition-transform duration-300">
+                    99%
+                </div>
+                <div class="text-gray-400">Satisfaction</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock %}

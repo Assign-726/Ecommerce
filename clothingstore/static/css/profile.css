@@ -1,0 +1,116 @@
+/* Profile page UI enhancements */
+.profile-header {
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+}
+.profile-card {
+  transition: box-shadow 0.3s ease, transform 0.25s ease;
+}
+.profile-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 24px 45px -12px rgba(0,0,0,0.18);
+}
+.profile-avatar-ring {
+  box-shadow: 0 10px 25px rgba(79,70,229,0.25);
+}
+.badge-soft {
+  color: #4338ca;
+  background: rgba(79,70,229,0.08);
+}
+.btn-gradient {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.btn-gradient:hover { 
+  transform: translateY(-2px);
+  box-shadow: 0 18px 35px rgba(79,70,229,0.25);
+}
+
+/* Edit page enhancements */
+.section-card {
+  border: 1px solid rgba(17, 24, 39, 0.06);
+  border-radius: 14px;
+  box-shadow: 0 8px 30px -12px rgba(0,0,0,0.12);
+}
+.section-card + .section-card { margin-top: 28px; }
+
+.preview-card {
+  position: sticky;
+  top: 88px;
+  border: 1px solid rgba(17,24,39,0.06);
+  border-radius: 16px;
+  box-shadow: 0 10px 40px -12px rgba(79,70,229,0.25);
+}
+
+.sticky-actions {
+  position: sticky;
+  bottom: 0;
+  background: linear-gradient(180deg, rgba(255,255,255,0.4), #fff 60%);
+  backdrop-filter: blur(6px);
+}
+
+.input-help { color: #6b7280; font-size: 12px; }
+.divider-dot { width: 4px; height: 4px; border-radius: 9999px; background: #c7d2fe; display: inline-block; margin: 0 8px; }
+
+.hover-lift { transition: transform .2s ease, box-shadow .2s ease; }
+.hover-lift:hover { transform: translateY(-2px); box-shadow: 0 16px 30px -12px rgba(0,0,0,0.18); }
+
+/* Compact, rounded input look for Edit Profile */
+#main-profile-form input[type="text"],
+#main-profile-form input[type="email"],
+#main-profile-form input[type="tel"],
+#main-profile-form input[type="date"],
+#main-profile-form input[type="number"],
+#main-profile-form select,
+#main-profile-form textarea {
+  width: 100%;
+  border: 1px solid rgba(17,24,39,0.15);
+  background: #fff;
+  border-radius: 14px;
+  padding: 12px 16px;
+  height: 48px;
+  font-size: 0.95rem;
+  color: #111827;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+#main-profile-form textarea { height: auto; min-height: 120px; }
+
+#main-profile-form input::placeholder,
+#main-profile-form textarea::placeholder {
+  color: #9ca3af;
+}
+
+#main-profile-form input:focus,
+#main-profile-form select:focus,
+#main-profile-form textarea:focus {
+  outline: none;
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 4px rgba(124,58,237,0.12);
+}
+
+/* Avatar with small camera badge */
+.avatar-wrapper { position: relative; display: inline-block; }
+.avatar-wrapper img { display: block; border-radius: 9999px; }
+.avatar-edit-badge {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  height: 24px;
+  width: 24px;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  border: 2px solid #fff;
+  box-shadow: 0 6px 14px rgba(99,102,241,0.35);
+  cursor: pointer;
+}
+.avatar-edit-badge svg { width: 14px; height: 14px; }
+
+/* Pill style primary button */
+.btn-pill {
+  border-radius: 9999px;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+}
+.btn-pill:hover { filter: brightness(1.05); }
+

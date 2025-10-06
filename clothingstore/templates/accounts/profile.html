@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Profile - {{ block.super }}{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/profile.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <!-- Header Card -->
+    <div class="rounded-2xl overflow-hidden shadow-xl profile-card">
+        <div class="profile-header px-6 sm:px-10 py-8">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-5">
+                    <div class="relative">
+                        <div class="h-20 w-20 sm:h-24 sm:w-24 rounded-full overflow-hidden ring-4 ring-white profile-avatar-ring bg-white">
+                            <img src="{% if profile.profile_picture %}{{ profile.profile_picture.url }}{% else %}{% static 'images/default-avatar.svg' %}{% endif %}" alt="Profile picture" class="h-full w-full object-cover">
+                        </div>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl sm:text-3xl font-extrabold text-white">{{ profile.user.get_full_name|default:profile.user.username }}</h1>
+                        <p class="text-indigo-100">Member since {{ profile.user.date_joined|date:"F Y" }}</p>
+                    </div>
+                </div>
+                <div class="flex gap-3">
+                    <a href="{% url 'accounts:profile_edit' %}" class="inline-flex items-center px-5 py-2.5 bg-gradient-to-r from-brand-blue to-brand-purple text-white rounded-xl font-semibold hover:from-brand-purple hover:to-brand-blue transition-all duration-300 btn-gradient">
+                        <i class="fas fa-user-edit mr-2"></i>
+                        Edit Profile
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Details -->
+        <div class="bg-white px-6 sm:px-10 py-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Personal Info Card -->
+                <div class="p-6 rounded-xl border border-gray-100 shadow-sm">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-bold text-gray-900">Personal Information</h3>
+                        <span class="text-xs px-2 py-1 rounded-full badge-soft">Profile</span>
+                    </div>
+                    <dl class="grid grid-cols-1 gap-y-4">
+                        <div>
+                            <dt class="text-sm text-gray-500">Email</dt>
+                            <dd class="text-sm font-medium text-gray-900">{{ profile.user.email }}</dd>
+                        </div>
+                        {% if profile.phone_number %}
+                        <div>
+                            <dt class="text-sm text-gray-500">Phone</dt>
+                            <dd class="text-sm font-medium text-gray-900">{{ profile.phone_number }}</dd>
+                        </div>
+                        {% endif %}
+                        {% if profile.date_of_birth %}
+                        <div>
+                            <dt class="text-sm text-gray-500">Date of Birth</dt>
+                            <dd class="text-sm font-medium text-gray-900">{{ profile.date_of_birth|date:"F j, Y" }}</dd>
+                        </div>
+                        {% endif %}
+                    </dl>
+                </div>
+
+                <!-- Address Card -->
+                <div class="p-6 rounded-xl border border-gray-100 shadow-sm">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-bold text-gray-900">Address</h3>
+                        <span class="text-xs px-2 py-1 rounded-full badge-soft">Shipping</span>
+                    </div>
+                    {% if profile.address_line1 %}
+                    <div class="space-y-1 text-sm font-medium text-gray-900">
+                        <div>{{ profile.address_line1 }}</div>
+                        {% if profile.address_line2 %}<div>{{ profile.address_line2 }}</div>{% endif %}
+                        <div>
+                            {% if profile.city %}{{ profile.city }}, {% endif %}
+                            {% if profile.state %}{{ profile.state }} {% endif %}
+                            {% if profile.postal_code %}{{ profile.postal_code }}{% endif %}
+                        </div>
+                        {% if profile.country %}<div>{{ profile.country }}</div>{% endif %}
+                    </div>
+                    {% else %}
+                    <p class="text-sm text-gray-500">No address saved yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

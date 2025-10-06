@@ -1,0 +1,40 @@
+<!-- templates/cart/partials/cart_items.html -->
+{% for item in cart.items.all %}
+<div class="flex py-6 border-b border-border">
+    <div class="w-24 h-24 flex-shrink-0 mr-6">
+        {% if item.product.images.first %}
+            <img src="{{ item.product.images.first.image.url }}" alt="{{ item.product.name }}" class="w-full h-full object-cover">
+        {% else %}
+            <div class="w-full h-full bg-gray-100"></div>
+        {% endif %}
+    </div>
+
+    <div class="flex-1 flex flex-col justify-between">
+        <div>
+            <h3 class="text-base font-medium text-text-primary">{{ item.product.name }}</h3>
+            <div class="text-sm text-text-secondary mt-1">
+                {% if item.size %}<span>{{ item.size }}</span>{% endif %}
+                {% if item.size and item.color %}<span class="mx-1">/</span>{% endif %}
+                {% if item.color %}<span>{{ item.color }}</span>{% endif %}
+            </div>
+        </div>
+        <div class="flex items-center mt-2">
+            <form hx-post="{% url 'cart:remove' %}" hx-target="#cart-items" hx-swap="innerHTML" class="m-0">
+                {% csrf_token %}
+                <input type="hidden" name="item_id" value="{{ item.id }}">
+                <button type="submit" class="text-xs text-text-subtle hover:text-text-primary uppercase tracking-wider">Remove</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="flex flex-col items-end justify-between ml-6">
+        <p class="text-base font-medium text-text-primary">₹{{ item.get_total_price }}</p>
+        <form hx-post="{% url 'cart:update' %}" hx-target="#cart-items" hx-swap="innerHTML" hx-trigger="change" class="m-0">
+            {% csrf_token %}
+            <input type="hidden" name="item_id" value="{{ item.id }}">
+            <input type="number" name="quantity" value="{{ item.quantity }}" min="1" 
+                   class="input w-20 text-center p-2 h-10">
+        </form>
+    </div>
+</div>
+{% endfor %}

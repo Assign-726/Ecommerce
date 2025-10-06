@@ -1,0 +1,744 @@
+{% extends 'base.html' %}
+
+{% block title %}Products - ClothingStore{% endblock %}
+
+{% block content %}
+<!-- Hero Section for Products Page -->
+<section class="relative bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 py-20 overflow-hidden">
+    <!-- Animated Background -->
+    <div class="absolute inset-0">
+        <div class="absolute top-1/4 left-1/4 w-64 h-64 bg-white/5 rounded-full blur-3xl animate-pulse"></div>
+        <div class="absolute bottom-1/4 right-1/4 w-48 h-48 bg-white/10 rounded-full blur-2xl animate-pulse" style="animation-delay: -1s;"></div>
+    </div>
+    
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-white">
+        <h1 class="text-5xl sm:text-6xl font-bold mb-6 bg-gradient-to-r from-white to-purple-200 bg-clip-text text-transparent">
+            Discover Fashion
+        </h1>
+        <p class="text-xl opacity-90 max-w-2xl mx-auto">
+            Explore our curated collection of premium clothing and accessories
+        </p>
+    </div>
+</section>
+
+<div class="max-w-screen-2xl mx-auto px-6 sm:px-8 lg:px-10 py-8">
+    <!-- Enhanced Header -->
+    <div class="mb-8">
+        <div class="flex items-center justify-between mb-6">
+            <div>
+                <h2 class="text-3xl font-bold text-gray-900 mb-2">Our Collection</h2>
+                <p class="text-gray-600">{{ products|length }} products found</p>
+            </div>
+
+            <!-- Mobile Filter Toggle -->
+            <button id="mobile-filter-toggle" class="lg:hidden inline-flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-full hover:from-purple-700 hover:to-pink-700 transition-all duration-300 shadow-lg">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.207A1 1 0 013 6.5V4z"></path>
+                </svg>
+                <span class="font-medium">Filters</span>
+            </button>
+        </div>
+
+        <!-- Search and sort row -->
+        <div class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div class="sm:col-span-2">
+                <div class="relative">
+                    <input id="search-input" type="text" placeholder="Search products" value="{{ request.GET.search|default:'' }}" class="input pl-10 pr-28">
+                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M10 18a8 8 0 110-16 8 8 0 010 16z"/></svg>
+                    <div class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center space-x-2">
+                        <button id="search-button" class="btn btn-primary">Search</button>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <select id="sort-select" class="input">
+                    <option value="">Sort by</option>
+                    <option value="name" {% if request.GET.sort == 'name' %}selected{% endif %}>Name A-Z</option>
+                    <option value="-name" {% if request.GET.sort == '-name' %}selected{% endif %}>Name Z-A</option>
+                    <option value="price" {% if request.GET.sort == 'price' %}selected{% endif %}>Price Low-High</option>
+                    <option value="-price" {% if request.GET.sort == '-price' %}selected{% endif %}>Price High-Low</option>
+                    <option value="-created_at" {% if request.GET.sort == '-created_at' %}selected{% endif %}>Newest First</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Category chips -->
+        {% if categories %}
+        <div class="mt-4 flex flex-wrap gap-2">
+            {% for category in categories|slice:':8' %}
+                <button type="button" data-cat="{{ category.slug }}" class="cat-chip pill border text-sm {% if request.GET.category == category.slug %}text-white gradient-text bg-gray-900{% else %}bg-white text-gray-700 border-gray-300 hover:bg-gray-50{% endif %}">
+                    {{ category.name }}
+                </button>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Active Filter Chips -->
+    {% if request.GET.category or request.GET.price_range or request.GET.sizes or request.GET.search %}
+    <div class="flex flex-wrap items-center gap-2 mb-4">
+        <span class="text-sm text-gray-500 mr-1">Active filters:</span>
+        {% if request.GET.search %}
+        <span class="chip" data-param="search">
+            Search: "{{ request.GET.search }}"
+            <button class="chip-remove" title="Remove">&times;</button>
+        </span>
+        {% endif %}
+        {% if request.GET.category %}
+        <span class="chip" data-param="category">
+            Category: {{ request.GET.category }}
+            <button class="chip-remove" title="Remove">&times;</button>
+        </span>
+        {% endif %}
+        {% if request.GET.price_range %}
+        <span class="chip" data-param="price_range">
+            Price: {{ request.GET.price_range }}
+            <button class="chip-remove" title="Remove">&times;</button>
+        </span>
+        {% endif %}
+        {% if request.GET.sizes %}
+        <span class="chip" data-param="sizes">
+            Sizes: {{ request.GET.sizes }}
+            <button class="chip-remove" title="Remove">&times;</button>
+        </span>
+        {% endif %}
+        <button id="clear-all-filters" class="btn btn-secondary px-3 py-1.5 text-sm">Clear all</button>
+    </div>
+    {% endif %}
+
+    <div class="flex flex-col lg:flex-row gap-6">
+        <!-- Filters Sidebar -->
+        <div class="lg:w-64 xl:w-72 shrink-0">
+            <!-- Mobile Filter Overlay -->
+            <div id="mobile-filter-overlay" class="fixed inset-0 z-50 lg:hidden transform translate-x-full transition-transform duration-300 ease-in-out">
+                <div class="flex h-full">
+                    <div class="flex-1 bg-black bg-opacity-50" id="mobile-filter-backdrop"></div>
+                    <div class="w-80 max-w-sm bg-white shadow-2xl">
+                        <div class="flex flex-col h-full">
+                            <div class="flex items-center justify-between p-4 border-b border-gray-200">
+                                <h3 class="text-lg font-semibold text-gray-900">Filters</h3>
+                                <button id="close-mobile-filters" class="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors duration-300">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="flex-1 overflow-y-auto p-4">
+                                <div id="mobile-filters-content"></div>
+                            </div>
+                            <div class="p-4 border-t border-gray-200">
+                                <button id="apply-mobile-filters" class="w-full bg-brand-blue text-white py-3 px-4 rounded-lg font-medium hover:bg-brand-blue/90 transition-colors duration-300">
+                                    Apply Filters
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Desktop Filters -->
+            <div class="hidden lg:block card p-6 sticky top-24">
+                <h3 class="text-lg font-semibold mb-4 text-gray-900">Filters</h3>
+                
+                <!-- Categories -->
+                <div class="mb-6">
+                    <h4 class="font-medium mb-3">Categories</h4>
+                    <div class="space-y-2">
+                        <label class="flex items-center">
+                            <input type="checkbox" class="category-filter" value="" {% if not request.GET.category %}checked{% endif %}>
+                            <span class="ml-2">All Categories</span>
+                        </label>
+                        {% for category in categories %}
+                        <label class="flex items-center">
+                            <input type="checkbox" class="category-filter" value="{{ category.slug }}" 
+                                   {% if category.slug == request.GET.category %}checked{% endif %}>
+                            <span class="ml-2">{{ category.name }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Price Range -->
+                <div class="mb-6">
+                    <h4 class="font-medium mb-3">Price Range</h4>
+                    <div class="space-y-2">
+                        <label class="flex items-center">
+                            <input type="radio" name="price_range" value="" {% if not request.GET.price_range %}checked{% endif %}>
+                            <span class="ml-2">All Prices</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="radio" name="price_range" value="0-25" {% if request.GET.price_range == "0-25" %}checked{% endif %}>
+                            <span class="ml-2">₹0 - ₹100</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="radio" name="price_range" value="25-50" {% if request.GET.price_range == "25-50" %}checked{% endif %}>
+                            <span class="ml-2">₹100 - ₹250</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="radio" name="price_range" value="50-100" {% if request.GET.price_range == "50-100" %}checked{% endif %}>
+                            <span class="ml-2">₹250 - ₹500</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="radio" name="price_range" value="100+" {% if request.GET.price_range == "100+" %}checked{% endif %}>
+                            <span class="ml-2">₹500+</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Size -->
+                <div class="mb-6">
+                    <h4 class="font-medium mb-3">Size</h4>
+                    <div class="flex flex-wrap gap-2">
+                        <label class="cursor-pointer">
+                            <input type="checkbox" class="size-filter hidden" value="XS" {% if request.GET.sizes and 'XS' in request.GET.sizes %}checked{% endif %}>
+                            <span class="inline-flex items-center justify-center min-w-[44px] px-3 py-1.5 text-sm border border-gray-300 rounded-md hover:bg-gray-100">XS</span>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="checkbox" class="size-filter hidden" value="S" {% if request.GET.sizes and 'S' in request.GET.sizes %}checked{% endif %}>
+                            <span class="inline-flex items-center justify-center min-w-[44px] px-3 py-1.5 text-sm border border-gray-300 rounded-md hover:bg-gray-100">S</span>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="checkbox" class="size-filter hidden" value="M" {% if request.GET.sizes and 'M' in request.GET.sizes %}checked{% endif %}>
+                            <span class="inline-flex items-center justify-center min-w-[44px] px-3 py-1.5 text-sm border border-gray-300 rounded-md hover:bg-gray-100">M</span>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="checkbox" class="size-filter hidden" value="L" {% if request.GET.sizes and 'L' in request.GET.sizes %}checked{% endif %}>
+                            <span class="inline-flex items-center justify-center min-w-[44px] px-3 py-1.5 text-sm border border-gray-300 rounded-md hover:bg-gray-100">L</span>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="checkbox" class="size-filter hidden" value="XL" {% if request.GET.sizes and 'XL' in request.GET.sizes %}checked{% endif %}>
+                            <span class="inline-flex items-center justify-center min-w-[44px] px-3 py-1.5 text-sm border border-gray-300 rounded-md hover:bg-gray-100">XL</span>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="checkbox" class="size-filter hidden" value="2XL" {% if request.GET.sizes and '2XL' in request.GET.sizes %}checked{% endif %}>
+                            <span class="inline-flex items-center justify-center min-w-[44px] px-3 py-1.5 text-sm border border-gray-300 rounded-md hover:bg-gray-100">2XL</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <button id="apply-filters" class="btn btn-primary w-full">
+                    Apply Filters
+                </button>
+            </div>
+        </div>
+
+        <!-- Products Grid -->
+        <div class="lg:flex-1">
+            {% if products %}
+            <!-- grid width of products list -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6" id="products-grid">
+                    {% for product in products %}
+                    <div class="card overflow-hidden hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 group card-shine">
+                        <div class="relative overflow-hidden">
+                            <a href="{{ product.get_absolute_url }}">
+                                {% if product.images.first %}
+                                    <img src="{{ product.images.first.image.url }}" alt="{{ product.name }}" 
+                                         class="skeleton w-full h-60 sm:h-64 md:h-72 lg:h-80 object-cover group-hover:scale-110 transition-transform duration-700" onload="this.classList.remove('skeleton')">
+                                {% else %}
+                                    <div class="w-full h-56 sm:h-64 md:h-72 lg:h-80 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+                                        <i class="fas fa-image text-gray-400 text-3xl sm:text-4xl"></i>
+                                    </div>
+                                {% endif %}
+                            </a>
+                            
+                            <!-- Discount Badge -->
+                            {% if product.discount_price %}
+                                <div class="absolute top-4 left-4 badge !bg-gradient-to-r from-red-500 to-pink-500 !text-white shadow-lg animate-bounce-gentle">
+                                    {% widthratio product.discount_price product.price 100 as discount_percent %}
+                                    {{ discount_percent|floatformat:0 }}% OFF
+                                </div>
+                            {% endif %}
+                            
+                            <!-- Quick Actions -->
+                            <div class="absolute top-4 right-4 flex flex-col space-y-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-4 group-hover:translate-x-0">
+                                {% if user.is_authenticated %}
+                                    <button class="wishlist-btn bg-white/90 backdrop-blur-sm p-2 rounded-full hover:bg-white transition-all shadow-lg {% if product.id in user_wishlist_product_ids %}text-red-500{% else %}text-gray-700 hover:text-red-500{% endif %}"
+                                            onclick="toggleWishlist({{ product.id }}, this, event)" 
+                                            title="{% if product.id in user_wishlist_product_ids %}Remove from Wishlist{% else %}Add to Wishlist{% endif %}"
+                                            data-product-id="{{ product.id }}">
+                                        <svg class="w-5 h-5" fill="{% if product.id in user_wishlist_product_ids %}currentColor{% else %}none{% endif %}" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                                        </svg>
+                                    </button>
+                                {% endif %}
+                               
+                            </div>
+
+                            <!-- Quick Add to Cart 
+                            <div class="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                <button type="button" onclick="quickAddToCart({{ product.id }})" class="btn btn-primary px-4 py-2 text-sm rounded-xl">
+                                    <i class="fas fa-cart-plus mr-2"></i>Add to cart
+                                </button>
+                            </div>
+                            -->
+                            <!-- Overlay Gradient -->
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        </div>
+                        
+                        <div class="p-5 sm:p-6">
+                            <div class="mb-3">
+                                <span class="badge text-xs uppercase tracking-wide">{{ product.category.name }}</span>
+                            </div>
+                            <h3 class="text-lg sm:text-xl font-bold mb-3 line-clamp-2 group-hover:text-brand-blue transition-colors duration-300">
+                                <a href="{{ product.get_absolute_url }}" class="hover:text-brand-blue transition-colors duration-300">
+                                    {{ product.name }}
+                                </a>
+                            </h3>
+                            
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center space-x-3">
+                                    {% if product.discount_price %}
+                                        <span class="price-now gradient-text text-2xl">₹{{ product.discount_price }}</span>
+                                        <span class="price-compare text-lg">₹{{ product.price }}</span>
+                                    {% else %}
+                                        <span class="price-now text-2xl">₹{{ product.price }}</span>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Rating Stars -->
+                                <div class="flex items-center bg-yellow-50 px-2.5 py-1 rounded-full border border-yellow-100 shadow-sm">
+                                    {% for i in "12345" %}
+                                        <svg class="w-4 h-4 text-yellow-400 fill-current" viewBox="0 0 20 20">
+                                            <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
+                                        </svg>
+                                    {% endfor %}
+                                    <span class="text-sm text-gray-600 ml-1 font-medium">(4.5)</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Available Sizes -->
+                            {% if product.available_sizes %}
+                                <div class="mb-4">
+                                    <span class="text-sm font-medium text-gray-700 mb-2 block">Available Sizes:</span>
+                                    <div class="flex flex-wrap gap-2">
+                                        {% for size in product.available_sizes %}
+                                            <span class="tag hover:text-white hover:bg-gradient-to-r hover:from-brand-blue hover:to-brand-purple transition-all cursor-pointer">{{ size }}</span>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            {% endif %}
+                            
+                            <!-- Stock Status -->
+                            <div class="flex items-center mb-4">
+                                {% if product.stock > 10 %}
+                                    <div class="flex items-center text-green-600">
+                                        <div class="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                                        <span class="text-sm font-medium">In Stock</span>
+                                    </div>
+                                {% elif product.stock > 0 %}
+                                    <div class="flex items-center text-orange-600">
+                                        <div class="w-2 h-2 bg-orange-500 rounded-full mr-2"></div>
+                                        <span class="text-sm font-medium">Only {{ product.stock }} left</span>
+                                    </div>
+                                {% else %}
+                                    <div class="flex items-center text-red-600">
+                                        <div class="w-2 h-2 bg-red-500 rounded-full mr-2"></div>
+                                        <span class="text-sm font-medium">Out of Stock</span>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- View Product Button -->
+                            <a href="{% url 'products:detail' slug=product.slug %}" 
+                               class="btn btn-primary w-full mt-4">
+                                View Product
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Pagination -->
+                {% if is_paginated %}
+                    <div class="flex justify-center mt-12">
+                        <nav class="flex items-center space-x-2">
+                            {% if page_obj.has_previous %}
+                                <a href="?page=1{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}"
+                                   class="px-4 py-2 rounded-full border border-gray-200 bg-white text-gray-700 hover:text-brand-blue hover:border-brand-blue/40 shadow-sm">First</a>
+                                <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}"
+                                   class="px-4 py-2 rounded-full border border-gray-200 bg-white text-gray-700 hover:text-brand-blue hover:border-brand-blue/40 shadow-sm">Previous</a>
+                            {% endif %}
+
+                            <span class="pagination-badge">
+                                {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                            </span>
+
+                            {% if page_obj.has_next %}
+                                <a href="?page={{ page_obj.next_page_number }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}"
+                                   class="px-4 py-2 rounded-full border border-gray-200 bg-white text-gray-700 hover:text-brand-blue hover:border-brand-blue/40 shadow-sm">Next</a>
+                                <a href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}"
+                                   class="px-4 py-2 rounded-full border border-gray-200 bg-white text-gray-700 hover:text-brand-blue hover:border-brand-blue/40 shadow-sm">Last</a>
+                            {% endif %}
+                        </nav>
+                    </div>
+                {% endif %}
+            {% else %}
+                <div class="text-center py-12">
+                    <svg class="w-24 h-24 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2 2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+                    </svg>
+                    <h3 class="text-xl font-semibold text-gray-600 mb-2">No products found</h3>
+                    <p class="text-gray-500">Try adjusting your filters or search terms.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+// Enhanced JavaScript functionality
+function toggleWishlist(productId, button, event) {
+    // Prevent default behavior and event propagation
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+    
+    // Prevent multiple clicks
+    if (button.disabled) return;
+    button.disabled = true;
+    
+    fetch(`/wishlist/toggle/${productId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'X-Requested-With': 'XMLHttpRequest',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const heart = button.querySelector('svg');
+            const heartPath = button.querySelector('svg path');
+            
+            if (data.in_wishlist) {
+                // Added to wishlist
+                heart.setAttribute('fill', 'currentColor');
+                button.classList.remove('text-gray-700');
+                button.classList.add('text-red-500');
+                button.title = 'Remove from Wishlist';
+            } else {
+                // Removed from wishlist
+                heart.setAttribute('fill', 'none');
+                button.classList.remove('text-red-500');
+                button.classList.add('text-gray-700');
+                button.title = 'Add to Wishlist';
+            }
+            
+            // Update wishlist count in navbar
+            const wishlistCount = document.getElementById('wishlist-count');
+            if (data.wishlist_count > 0) {
+                if (wishlistCount) {
+                    wishlistCount.textContent = data.wishlist_count;
+                } else {
+                    // Create count badge if it doesn't exist
+                    const wishlistLink = document.querySelector('a[href*="wishlist"]');
+                    if (wishlistLink) {
+                        const countBadge = document.createElement('span');
+                        countBadge.id = 'wishlist-count';
+                        countBadge.className = 'absolute -top-1 -right-1 min-w-[20px] h-5 bg-accent-500 text-white text-xs rounded-full flex items-center justify-center font-bold';
+                        countBadge.textContent = data.wishlist_count;
+                        wishlistLink.appendChild(countBadge);
+                    }
+                }
+            } else {
+                // Remove count badge if wishlist is empty
+                if (wishlistCount) {
+                    wishlistCount.remove();
+                }
+            }
+            
+            showNotification(data.message, 'success');
+        } else {
+            showNotification(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('An error occurred. Please try again.', 'error');
+    })
+    .finally(() => {
+        button.disabled = false;
+    });
+}
+
+function quickAddToCart(productId) {
+    // Quick add to cart functionality
+    const button = event.target.closest('button');
+    const originalContent = button.innerHTML;
+    
+    // Show loading state
+    button.innerHTML = '<svg class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>';
+    button.disabled = true;
+    
+    // Create form data
+    const formData = new FormData();
+    formData.append('product_id', productId);
+    formData.append('quantity', '1');
+    formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+    
+    // Send AJAX request to add to cart
+    fetch('/cart/add/', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+        }
+    })
+    .then(response => {
+        if (response.ok) {
+            showNotification('Added to cart successfully!', 'success');
+            updateCartCount();
+        } else {
+            showNotification('Failed to add to cart. Please try again.', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('An error occurred. Please try again.', 'error');
+    })
+    .finally(() => {
+        button.innerHTML = originalContent;
+        button.disabled = false;
+    });
+}
+
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `fixed top-20 right-4 z-50 px-6 py-4 rounded-lg shadow-lg transform translate-x-full transition-transform duration-300 ${
+        type === 'success' ? 'bg-green-500 text-white' :
+        type === 'error' ? 'bg-red-500 text-white' :
+        type === 'warning' ? 'bg-yellow-500 text-white' :
+        'bg-blue-500 text-white'
+    }`;
+    
+    notification.innerHTML = `
+        <div class="flex items-center">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                ${type === 'success' ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>' :
+                  type === 'error' ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>' :
+                  '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>'}
+            </svg>
+            ${message}
+        </div>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Slide in
+    setTimeout(() => {
+        notification.classList.remove('translate-x-full');
+    }, 100);
+    
+    // Slide out and remove
+    setTimeout(() => {
+        notification.classList.add('translate-x-full');
+        setTimeout(() => {
+            document.body.removeChild(notification);
+        }, 300);
+    }, 3000);
+}
+
+function updateCartCount() {
+    // Update cart count in navigation
+    const cartCount = document.getElementById('cart-count');
+    if (cartCount) {
+        const currentCount = parseInt(cartCount.textContent) || 0;
+        cartCount.textContent = currentCount + 1;
+        cartCount.classList.add('animate-bounce-gentle');
+        setTimeout(() => {
+            cartCount.classList.remove('animate-bounce-gentle');
+        }, 2000);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Mobile filter functionality
+    const mobileFilterToggle = document.getElementById('mobile-filter-toggle');
+    const mobileFilterOverlay = document.getElementById('mobile-filter-overlay');
+    const mobileFilterBackdrop = document.getElementById('mobile-filter-backdrop');
+    const closeMobileFilters = document.getElementById('close-mobile-filters');
+    const applyMobileFilters = document.getElementById('apply-mobile-filters');
+    const mobileFiltersContent = document.getElementById('mobile-filters-content');
+    
+    // Copy desktop filters to mobile
+    function copyFiltersToMobile() {
+        const desktopFilters = document.querySelector('.lg\\:block .bg-white');
+        if (desktopFilters && mobileFiltersContent) {
+            mobileFiltersContent.innerHTML = desktopFilters.innerHTML;
+        }
+    }
+    
+    function openMobileFilters() {
+        if (mobileFilterOverlay) {
+            copyFiltersToMobile();
+            mobileFilterOverlay.classList.remove('translate-x-full');
+            document.body.style.overflow = 'hidden';
+        }
+    }
+    
+    function closeMobileFiltersFunc() {
+        if (mobileFilterOverlay) {
+            mobileFilterOverlay.classList.add('translate-x-full');
+            document.body.style.overflow = '';
+        }
+    }
+    
+    // Event listeners for mobile filters
+    if (mobileFilterToggle) {
+        mobileFilterToggle.addEventListener('click', openMobileFilters);
+    }
+    
+    if (mobileFilterBackdrop) {
+        mobileFilterBackdrop.addEventListener('click', closeMobileFiltersFunc);
+    }
+    
+    if (closeMobileFilters) {
+        closeMobileFilters.addEventListener('click', closeMobileFiltersFunc);
+    }
+    
+    if (applyMobileFilters) {
+        applyMobileFilters.addEventListener('click', function() {
+            updateProducts();
+            closeMobileFiltersFunc();
+        });
+    }
+    
+    // Close mobile filters on escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeMobileFiltersFunc();
+        }
+    });
+    
+    // Filter functionality
+    const applyFiltersBtn = document.getElementById('apply-filters');
+    const sortSelect = document.getElementById('sort-select');
+    const searchInput = document.getElementById('search-input');
+    const searchButton = document.getElementById('search-button');
+    
+    function updateProducts(extraParams = {}) {
+        const params = new URLSearchParams();
+        
+        // Get selected categories
+        const selectedCategories = Array.from(document.querySelectorAll('.category-filter:checked'))
+            .map(cb => cb.value).filter(v => v);
+        if (selectedCategories.length > 0) {
+            params.set('category', selectedCategories.join(','));
+        }
+        
+        // Get selected price range
+        const selectedPriceRange = document.querySelector('input[name="price_range"]:checked');
+        if (selectedPriceRange && selectedPriceRange.value) {
+            params.set('price_range', selectedPriceRange.value);
+        }
+        
+        // Get selected sizes
+        const selectedSizes = Array.from(document.querySelectorAll('.size-filter:checked'))
+            .map(cb => cb.value);
+        if (selectedSizes.length > 0) {
+            params.set('sizes', selectedSizes.join(','));
+        }
+        
+        // Search text
+        if (searchInput && searchInput.value.trim().length > 0) {
+            params.set('search', searchInput.value.trim());
+        }
+
+        // Get sort option
+        if (sortSelect.value) {
+            params.set('sort', sortSelect.value);
+        }
+        
+        // Merge extra params (e.g., from chips)
+        Object.entries(extraParams).forEach(([k, v]) => {
+            if (v === null) {
+                params.delete(k);
+            } else if (typeof v !== 'undefined') {
+                params.set(k, v);
+            }
+        });
+
+        // Redirect with new parameters
+        window.location.search = params.toString();
+    }
+    
+    applyFiltersBtn.addEventListener('click', () => updateProducts());
+    sortSelect.addEventListener('change', updateProducts);
+
+    // Search interactions
+    if (searchButton) {
+        searchButton.addEventListener('click', () => updateProducts());
+    }
+    if (searchInput) {
+        searchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                updateProducts();
+            }
+        });
+    }
+
+    // Category chips
+    document.querySelectorAll('.cat-chip').forEach(chip => {
+        chip.addEventListener('click', function() {
+            const slug = this.getAttribute('data-cat');
+            updateProducts({ category: slug });
+        });
+    });
+    
+    // Size filter styling
+    document.querySelectorAll('.size-filter').forEach(checkbox => {
+        const span = checkbox.nextElementSibling;
+        
+        checkbox.addEventListener('change', function() {
+            if (this.checked) {
+                span.classList.add('bg-primary', 'text-white', 'border-primary');
+                span.classList.remove('border-gray-300', 'hover:bg-gray-100');
+            } else {
+                span.classList.remove('bg-primary', 'text-white', 'border-primary');
+                span.classList.add('border-gray-300', 'hover:bg-gray-100');
+            }
+        });
+        
+        // Initialize styling
+        if (checkbox.checked) {
+            span.classList.add('bg-primary', 'text-white', 'border-primary');
+        }
+    });
+
+    // Active filter chips: remove single param
+    document.querySelectorAll('.chip-remove').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const chip = this.closest('.chip');
+            if (!chip) return;
+            const param = chip.getAttribute('data-param');
+            const url = new URL(window.location.href);
+            url.searchParams.delete(param);
+            // Clean up empty query
+            window.location.href = url.pathname + (url.searchParams.toString() ? '?' + url.searchParams.toString() : '');
+        });
+    });
+
+    // Clear all filters
+    const clearAllBtn = document.getElementById('clear-all-filters');
+    if (clearAllBtn) {
+        clearAllBtn.addEventListener('click', function() {
+            const url = new URL(window.location.href);
+            // Preserve page to 1 when clearing
+            url.search = '';
+            window.location.href = url.pathname;
+        });
+    }
+});
+</script>
+
+<style>
+.line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+</style>
+{% endblock %}

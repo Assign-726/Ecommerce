@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+
+{% block title %}My Orders - ClothingStore{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <!-- Page Hero -->
+    <div class="text-center mb-10">
+        <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-500 to-indigo-500">
+            Order History
+        </h1>
+        <p class="mt-2 text-sm text-text-secondary">Review your past orders and their status.</p>
+    </div>
+
+    {% if orders %}
+        <div class="space-y-6">
+            {% for order in orders %}
+                <div class="card p-0 overflow-hidden transition-all duration-200 hover:shadow-xl hover:-translate-y-0.5">
+                    <!-- Order Header -->
+                    <div class="px-6 py-4 bg-background-alt/70 border-b border-border flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                        <div class="flex-1 grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
+                            <div>
+                                <p class="text-text-subtle">Order Number</p>
+                                <p class="font-semibold">#{{ order.order_number }}</p>
+                            </div>
+                            <div>
+                                <p class="text-text-subtle">Date Placed</p>
+                                <p class="font-medium">{{ order.created_at|date:"M d, Y" }}</p>
+                            </div>
+                            <div>
+                                <p class="text-text-subtle">Total Amount</p>
+                                <p class="font-semibold">₹{{ order.total_amount }}</p>
+                            </div>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <span class="inline-flex items-center gap-2 badge 
+                                {% if order.status == 'delivered' %}badge-success
+                                {% elif order.status == 'shipped' %}badge-info
+                                {% elif order.status == 'processing' %}badge-info
+                                {% elif order.status == 'pending' %}badge-warning
+                                {% elif order.status == 'cancelled' %}badge-danger
+                                {% else %}badge-secondary{% endif %}">
+                                <span class="w-2 h-2 rounded-full bg-current/80"></span>
+                                {{ order.get_status_display }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Order Items & Actions -->
+                    <div class="px-6 py-5 flex flex-col md:flex-row justify-between items-start gap-6">
+                        <div class="flex-1">
+                            <!-- Item thumbnails row 
+                            <div class="flex -space-x-3 mb-3">
+                                {% for item in order.items.all|slice:":5" %}
+                                    <img src="{{ item.product.get_thumbnail_url }}" alt="{{ item.product.name }} thumbnail" class="w-12 h-12 rounded-md ring-2 ring-white/70 dark:ring-black/20 object-cover bg-background-alt">
+                                {% endfor %}
+                            </div> -->
+                            
+                            <!-- First items list -->
+                            <div class="space-y-3">
+                                {% for item in order.items.all|slice:":2" %}
+                                    <div class="flex items-center gap-4 text-sm">
+                                        <img src="{{ item.product.get_thumbnail_url }}" alt="{{ item.product.name }}" class="w-14 h-14 object-cover rounded-md bg-background-alt">
+                                        <div class="flex-1">
+                                            <p class="font-medium">{{ item.product.name }}</p>
+                                            <div class="text-text-secondary flex flex-wrap items-center gap-x-3 gap-y-1">
+                                                <span>Qty: {{ item.quantity }}</span>
+                                                {% if item.size %}<span>Size: {{ item.size }}</span>{% endif %}
+                                                {% if item.color %}
+                                                    <span class="inline-flex items-center gap-2">
+                                                        <span>Color:</span>
+                                                        <span class="inline-block w-3.5 h-3.5 rounded-full border border-border" style="background-color: {{ item.color|lower }}"></span>
+                                                        <span class="text-xs text-text-subtle">{{ item.color }}</span>
+                                                    </span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <p class="text-sm font-medium">₹{{ item.price }}</p>
+                                    </div>
+                                {% endfor %}
+                                {% if order.items.all|length > 2 %}
+                                    <p class="text-sm text-text-subtle">+ {{ order.items.all|length|add:"-2" }} more item(s)</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="flex-shrink-0 pt-2">
+                            <a href="{% url 'orders:detail' order.order_number %}" class="btn-secondary">
+                                View Details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <!-- Empty State -->
+        <div class="text-center py-20">
+            <div class="w-28 h-28 bg-gradient-to-br from-indigo-500/10 to-fuchsia-500/10 rounded-2xl flex items-center justify-center mx-auto mb-6 ring-1 ring-border">
+                <svg class="w-12 h-12 text-text-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+            </div>
+            <h2 class="text-2xl font-semibold">No orders yet</h2>
+            <p class="text-text-secondary mt-2 max-w-md mx-auto">
+                When you place an order, it will appear here. Let's get you started!
+            </p>
+            <div class="mt-8">
+                <a href="{% url 'products:list' %}" class="btn-primary">Start Shopping</a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+

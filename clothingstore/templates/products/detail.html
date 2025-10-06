@@ -1,0 +1,222 @@
+<!-- templates/products/detail.html -->
+{% extends 'base.html' %}
+
+{% block title %}{{ product.name }} - ClothingStore{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-16">
+        
+        <!-- Product Image -->
+        <div class="w-full">
+            <div class="aspect-w-1 aspect-h-1 bg-gray-100">
+                <img id="main-image" src="{{ product.get_thumbnail_url }}" alt="{{ product.name }}" class="w-full h-full object-cover">
+            </div>
+        </div>
+
+        <!-- Product Info -->
+        <div class="flex flex-col justify-center py-4">
+            <div>
+                <h1 class="text-2xl md:text-3xl font-medium tracking-wide text-text-primary">{{ product.name }}</h1>
+                <p class="text-xl font-medium text-text-primary mt-3">
+                    {% if product.has_discount %}
+                        <span class="price">₹{{ product.get_price }}</span>
+                        <span class="price-compare">₹{{ product.price }}</span>
+                    {% else %}
+                        <span class="price">₹{{ product.get_price }}</span>
+                    {% endif %}
+                </p>
+            </div>
+
+            <!-- Thumbnails -->
+            {% if product.images.count > 1 %}
+                <div class="mt-6 flex space-x-3">
+                    {% for image in product.images.all %}
+                        <div class="w-16 h-16 border hover:border-black cursor-pointer {% if forloop.first %}border-black{% endif %}" onclick="document.getElementById('main-image').src = '{{ image.image.url }}'; document.querySelectorAll('.thumb-active').forEach(el => el.classList.remove('thumb-active','border-black')); this.classList.add('thumb-active','border-black');">
+                            <img src="{{ image.image.url }}" alt="Thumbnail for {{ product.name }}" class="w-full h-full object-cover">
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <div class="mt-6 text-base text-text-secondary leading-relaxed">{{ product.description|safe }}</div>
+
+            {% if user.is_authenticated %}
+                <form hx-post="{% url 'cart:add' %}" hx-target="#cart-count" hx-swap="outerHTML" class="mt-8 space-y-6">
+                    {% csrf_token %}
+                    <input type="hidden" name="product_id" value="{{ product.id }}">
+
+                    {% if product.available_colors %}
+                        <div class="color-selector">
+                            <label class="text-sm font-medium text-text-secondary mb-2 block">COLOR</label>
+                            <div class="flex flex-wrap gap-3">
+                                {% for color in product.available_colors %}
+                                    <label class="relative inline-flex items-center justify-center">
+                                        <input type="radio" name="color" value="{{ color }}" class="sr-only peer" {% if forloop.first %}checked{% endif %}>
+                                        <span class="w-8 h-8 rounded-full border border-gray-300 ring-offset-1 peer-checked:ring-2 peer-checked:ring-black"
+                                              style="background-color: {{ color|lower }};"></span>
+                                        <span class="sr-only">{{ color }}</span>
+                                    </label>
+                                {% endfor %} 
+                            </div>
+                            <p id="selected-color" class="mt-2 text-xs text-text-secondary">Selected: {{ product.available_colors.0|default:'Default' }}</p>
+                        </div>
+                    {% endif %}
+
+                    {% if product.available_sizes %}
+                        <div class="size-selector">
+                            <label class="text-sm font-medium text-text-secondary mb-2 block">SIZE</label>
+                            <div class="flex flex-wrap gap-2">
+                                {% for size in product.available_sizes %}
+                                    <label>
+                                        <input type="radio" name="size" value="{{ size }}" class="sr-only peer" {% if forloop.first %}checked{% endif %} required>
+                                        <span class="flex items-center justify-center h-10 px-4 border border-border text-sm text-text-primary uppercase tracking-wider cursor-pointer peer-checked:bg-black peer-checked:text-white peer-checked:border-black">
+                                            {{ size }}
+                                        </span>
+                                    </label>
+                                {% endfor %}
+                            </div>
+                            <p id="selected-size" class="mt-2 text-xs text-text-secondary">Selected: {{ product.available_sizes.0|default:'Standard' }}</p>
+                        </div>
+                    {% endif %}
+
+                    <input type="hidden" name="quantity" value="1">
+
+                    <div class="flex items-center gap-4 pt-4">
+                        {% if product.stock > 0 %}
+                            <button type="submit" class="btn btn-primary w-full">ADD TO CART</button>
+                        {% else %}
+                            <button disabled class="btn w-full">Out of Stock</button>
+                        {% endif %}
+                        <button type="button" 
+                                onclick="toggleWishlist({{ product.id }}, this, event)" 
+                                class="wishlist-btn btn btn-secondary px-4" 
+                                title="{% if product.id in user_wishlist_product_ids %}Remove from Wishlist{% else %}Add to Wishlist{% endif %}">
+                            <svg class="w-5 h-5" fill="{% if product.id in user_wishlist_product_ids %}currentColor{% else %}none{% endif %}" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                            </svg>
+                        </button>
+                    </div>
+                </form>
+            {% else %}
+                <div class="mt-8 border border-border p-4 text-center">
+                    <p class="text-text-secondary">Please <a href="{% url 'accounts:login' %}" class="underline hover:text-black">log in</a> to add items to your cart.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Related Products -->
+    {% if related_products %}
+        <div class="mt-16">
+            <h2 class="text-xl lg:text-2xl font-semibold mb-6">You might also like</h2>
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
+                {% for product in related_products %}
+                    <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                        <a href="{{ product.get_absolute_url }}">
+                            {% if product.images.first %}
+                                <img src="{{ product.images.first.image.url }}" alt="{{ product.name }}" class="w-full h-44 object-cover">
+                            {% endif %}
+                        </a>
+                        <div class="p-3">
+                            <h3 class="text-sm font-medium mb-1 line-clamp-1">{{ product.name }}</h3>
+                            <p class="text-sm text-gray-700">₹{{ product.get_price }}</p>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+// Wishlist functionality
+function toggleWishlist(productId, button, event) {
+    // Prevent default behavior and event propagation
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+    // Prevent multiple clicks
+    if (button.disabled) return;
+    button.disabled = true;
+    fetch(`/wishlist/toggle/${productId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'X-Requested-With': 'XMLHttpRequest',
+        },
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const heart = button.querySelector('svg');
+                if (data.in_wishlist) {
+                    heart.setAttribute('fill', 'currentColor');
+                    button.classList.add('border-gray-900', 'text-gray-900');
+                } else {
+                    heart.setAttribute('fill', 'none');
+                    button.classList.remove('border-gray-900', 'text-gray-900');
+                }
+                const wishlistCount = document.getElementById('wishlist-count');
+                if (data.wishlist_count > 0) {
+                    if (wishlistCount) {
+                        wishlistCount.textContent = data.wishlist_count;
+                    } else {
+                        const wishlistLink = document.querySelector('a[href*="wishlist"]');
+                        if (wishlistLink) {
+                            const countBadge = document.createElement('span');
+                            countBadge.id = 'wishlist-count';
+                            countBadge.className = 'absolute -top-1 -right-1 min-w-[20px] h-5 bg-gray-900 text-white text-xs rounded-full flex items-center justify-center font-bold';
+                            countBadge.textContent = data.wishlist_count;
+                            wishlistLink.appendChild(countBadge);
+                        }
+                    }
+                } else if (wishlistCount) {
+                    wishlistCount.remove();
+                }
+                showNotification(data.message, 'success');
+            } else {
+                showNotification(data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('An error occurred. Please try again.', 'error');
+        })
+        .finally(() => {
+            button.disabled = false;
+        });
+}
+
+// Notification function (if not already defined in base.html)
+function showNotification(message, type) {
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg text-white transform translate-x-full transition-transform duration-300 ${
+        type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500'
+    }`;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    setTimeout(() => notification.classList.remove('translate-x-full'), 100);
+    setTimeout(() => {
+        notification.classList.add('translate-x-full');
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
+
+// Update selected color/size labels
+document.addEventListener('DOMContentLoaded', () => {
+  const colorRadios = document.querySelectorAll('input[name="color"]');
+  const sizeRadios = document.querySelectorAll('input[name="size"]');
+  const selectedColor = document.getElementById('selected-color');
+  const selectedSize = document.getElementById('selected-size');
+
+  colorRadios.forEach(r => r.addEventListener('change', () => {
+    if (selectedColor) selectedColor.textContent = `Selected: ${r.value}`;
+  }));
+  sizeRadios.forEach(r => r.addEventListener('change', () => {
+    if (selectedSize) selectedSize.textContent = `Selected: ${r.value}`;
+  }));
+});
+</script>
+{% endblock %}

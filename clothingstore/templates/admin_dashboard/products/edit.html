@@ -1,0 +1,302 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block page_title %}Edit Product{% endblock %}
+{% block page_description %}Update product details{% endblock %}
+
+{% block content %}
+<div class="animate-fade-in">
+    <div class="max-w-4xl mx-auto">
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center space-x-4">
+                <a href="{% url 'admin_dashboard:product_list' %}" class="text-gray-600 hover:text-gray-900 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                    </svg>
+                </a>
+                <h2 class="text-2xl font-bold text-gray-900">Edit Product</h2>
+            </div>
+        </div>
+
+        <!-- Form -->
+        <form method="post" enctype="multipart/form-data" class="space-y-8">
+            {% csrf_token %}
+            
+            <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-6">Basic Information</h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="name" class="block text-sm font-medium text-gray-700 mb-2">Product Name *</label>
+                        <input type="text" id="name" name="name" value="{{ product.name }}" required 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all"
+                               placeholder="Enter product name">
+                    </div>
+                    
+                    <div>
+                        <label for="slug" class="block text-sm font-medium text-gray-700 mb-2">URL Slug *</label>
+                        <input type="text" id="slug" name="slug" value="{{ product.slug }}" required 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all"
+                               placeholder="product-url-slug">
+                        <p class="text-sm text-gray-500 mt-1">URL-friendly version of the name</p>
+                    </div>
+                    
+                    <div>
+                        <label for="category" class="block text-sm font-medium text-gray-700 mb-2">Category *</label>
+                        <select id="category" name="category" required 
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all">
+                            <option value="">Select Category</option>
+                            {% for category in categories %}
+                                <option value="{{ category.id }}" {% if category.id == product.category.id %}selected{% endif %}>
+                                    {{ category.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label for="stock" class="block text-sm font-medium text-gray-700 mb-2">Stock Quantity *</label>
+                        <input type="number" id="stock" name="stock" min="0" value="{{ product.stock }}" required 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all"
+                               placeholder="0">
+                    </div>
+                </div>
+                
+                <div class="mt-6">
+                    <label for="description" class="block text-sm font-medium text-gray-700 mb-2">Description *</label>
+                    <textarea id="description" name="description" rows="4" required 
+                              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all"
+                              placeholder="Enter product description">{{ product.description }}</textarea>
+                </div>
+            </div>
+
+            <!-- Pricing -->
+            <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-6">Pricing</h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="price" class="block text-sm font-medium text-gray-700 mb-2">Regular Price *</label>
+                        <div class="relative">
+                            <span class="absolute left-3 top-3 text-gray-500">₹</span>
+                            <input type="number" id="price" name="price" step="0.01" min="0" value="{{ product.price }}" required 
+                                   class="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all"
+                                   placeholder="0.00">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label for="discount_price" class="block text-sm font-medium text-gray-700 mb-2">Sale Price</label>
+                        <div class="relative">
+                            <span class="absolute left-3 top-3 text-gray-500">₹</span>
+                            <input type="number" id="discount_price" name="discount_price" step="0.01" min="0" 
+                                   value="{{ product.discount_price|default:'' }}" 
+                                   class="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all"
+                                   placeholder="0.00">
+                        </div>
+                        <p class="text-sm text-gray-500 mt-1">Leave empty if no discount</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sizes -->
+            <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-6">Available Sizes</h3>
+                
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                    {% for size in size_choices %}
+                        <div class="flex items-center">
+                            <input id="size-{{ size.0 }}" name="available_sizes" type="checkbox" value="{{ size.0 }}" 
+                                   class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                                   {% if size.0 in product.available_sizes %}checked{% endif %}>
+                            <label for="size-{{ size.0 }}" class="ml-2 text-sm text-gray-700">
+                                {{ size.1 }}
+                            </label>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Colors -->
+            <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-6">Available Colors</h3>
+                
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                    {% for color in color_choices %}
+                        <label class="flex items-center space-x-2 p-3 border border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
+                            <input type="checkbox" id="color-{{ color.0 }}" name="available_colors" value="{{ color.0 }}" 
+                                   class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                                   {% if color.0 in product.available_colors %}checked{% endif %}>
+                            <span class="inline-block w-4 h-4 rounded-full border border-gray-300" style="background-color: {{ color.0 }};"></span>
+                            <label for="color-{{ color.0 }}" class="text-sm font-medium capitalize">{{ color.1 }}</label>
+                        </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Images -->
+            <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-6">Product Images</h3>
+                
+                {% if product.images.all %}
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mb-6">
+                        {% for image in product.images.all %}
+                            <div class="relative group">
+                                <img src="{{ image.image.url }}" alt="{{ product.name }}" class="w-full h-32 object-cover rounded-lg">
+                                <div class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-lg">
+                                    <button type="button" class="text-white hover:text-red-400 transition-colors"
+                                            onclick="deleteImage({{ image.id }})">
+                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                                {% if image.is_primary %}
+                                    <span class="absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full">Primary</span>
+                                {% else %}
+                                    <button type="button" class="absolute top-2 right-2 bg-blue-500 text-white text-xs px-2 py-1 rounded-full hover:bg-blue-600 transition-colors"
+                                            onclick="setAsPrimary({{ image.id }})">
+                                        Set Primary
+                                    </button>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                
+                <div class="mt-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Add More Images</label>
+                    <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg">
+                        <div class="space-y-1 text-center">
+                            <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                                <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                            <div class="flex text-sm text-gray-600">
+                                <label for="images" class="relative cursor-pointer bg-white rounded-md font-medium text-primary hover:text-primary-dark focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary">
+                                    <span>Upload files</span>
+                                    <input id="images" name="images" type="file" class="sr-only" multiple>
+                                </label>
+                                <p class="pl-1">or drag and drop</p>
+                            </div>
+                            <p class="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Status -->
+            <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-6">Status</h3>
+                
+                <div class="space-y-4">
+                    <div class="flex items-start">
+                        <div class="flex items-center h-5">
+                            <input id="is_active" name="is_active" type="checkbox" 
+                                   class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                                   {% if product.is_active %}checked{% endif %}>
+                        </div>
+                        <div class="ml-3 text-sm">
+                            <label for="is_active" class="font-medium text-gray-700">Active</label>
+                            <p class="text-gray-500">When unchecked, this product will be hidden from your store.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-start">
+                        <div class="flex items-center h-5">
+                            <input id="is_featured" name="is_featured" type="checkbox" 
+                                   class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                                   {% if product.is_featured %}checked{% endif %}>
+                        </div>
+                        <div class="ml-3 text-sm">
+                            <label for="is_featured" class="font-medium text-gray-700">Featured</label>
+                            <p class="text-gray-500">Featured products will be highlighted on the homepage.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="flex flex-col sm:flex-row justify-end space-y-4 sm:space-y-0 sm:space-x-4">
+                <a href="{% url 'admin_dashboard:product_list' %}" class="inline-flex justify-center items-center px-6 py-3 border border-gray-300 shadow-sm text-base font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors">
+                    Cancel
+                </a>
+                <button type="submit" class="inline-flex justify-center items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors">
+                    Update Product
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Hidden form for AJAX requests -->
+<form id="delete-image-form" method="post" action="{% url 'admin_dashboard:delete_product_image' %}" class="hidden">
+    {% csrf_token %}
+    <input type="hidden" name="image_id" id="delete-image-id">
+</form>
+
+<form id="set-primary-form" method="post" action="{% url 'admin_dashboard:set_primary_image' %}" class="hidden">
+    {% csrf_token %}
+    <input type="hidden" name="image_id" id="primary-image-id">
+</form>
+
+<script>
+// Auto-generate slug from name
+document.addEventListener('DOMContentLoaded', function() {
+    const nameField = document.getElementById('name');
+    const slugField = document.getElementById('slug');
+    
+    nameField.addEventListener('input', function() {
+        if (!slugField.value) {
+            const slug = nameField.value
+                .toLowerCase()
+                .replace(/[^\w\s-]/g, '') // Remove special chars
+                .replace(/\s+/g, '-')     // Replace spaces with -
+                .replace(/--+/g, '-')     // Replace multiple - with single -
+                .trim();
+            slugField.value = slug;
+        }
+    });
+    
+    // Image preview
+    const imageInput = document.getElementById('images');
+    const imagePreview = document.createElement('div');
+    imagePreview.className = 'mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4';
+    imageInput.parentNode.parentNode.parentNode.appendChild(imagePreview);
+    
+    imageInput.addEventListener('change', function(e) {
+        imagePreview.innerHTML = ''; // Clear previous previews
+        
+        if (this.files.length > 0) {
+            Array.from(this.files).forEach(file => {
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    const preview = document.createElement('div');
+                    preview.className = 'relative';
+                    preview.innerHTML = `
+                        <img src="${e.target.result}" class="w-full h-32 object-cover rounded-lg">
+                    `;
+                    imagePreview.appendChild(preview);
+                }
+                
+                reader.readAsDataURL(file);
+            });
+        }
+    });
+});
+
+// Handle image deletion
+function deleteImage(imageId) {
+    if (confirm('Are you sure you want to delete this image?')) {
+        document.getElementById('delete-image-id').value = imageId;
+        document.getElementById('delete-image-form').submit();
+    }
+}
+
+// Set image as primary
+function setAsPrimary(imageId) {
+    document.getElementById('primary-image-id').value = imageId;
+    document.getElementById('set-primary-form').submit();
+}
+</script>
+{% endblock %}

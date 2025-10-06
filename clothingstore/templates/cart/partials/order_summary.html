@@ -1,0 +1,60 @@
+{# cart/partials/order_summary.html #}
+<div id="order-summary-container" class="border border-border p-6 sticky top-24 bg-white rounded-xl shadow-lg">
+    <h2 class="text-lg font-medium text-text-primary">Order summary</h2>
+
+    <!-- Coupon Entry -->
+    {% if not applied_coupon %}
+    <div class="mt-5">
+        <form id="apply-coupon-form" action="{% url 'cart:apply_coupon' %}" method="POST" class="flex items-stretch gap-2">
+            {% csrf_token %}
+            <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+            <input id="coupon-code" name="coupon_code" type="text" placeholder="Enter coupon code" class="input flex-1" required>
+            <button type="submit" class="btn btn-secondary">Apply</button>
+        </form>
+        <p id="coupon-message" class="mt-1 text-sm text-text-secondary"></p>
+    </div>
+    {% else %}
+    <div class="mt-5">
+        <div class="flex items-center justify-between text-sm">
+            <p class="text-text-secondary">Applied coupon</p>
+            <span class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 text-xs font-medium border border-emerald-200">{{ applied_coupon.coupon.code }}</span>
+        </div>
+        <div class="mt-2 flex justify-between items-center">
+            <span class="text-sm">Discount ({{ applied_coupon.coupon.discount_value }}{% if applied_coupon.coupon.discount_type == 'percentage' %}%{% else %}₹{% endif %})</span>
+            <span class="text-sm font-medium text-red-600">-₹{{ applied_coupon.discount_amount }}</span>
+        </div>
+        <form id="remove-coupon-form" action="{% url 'cart:remove_coupon' %}" method="POST" class="mt-2">
+            {% csrf_token %}
+            <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+            <button type="submit" class="text-xs text-blue-600 hover:text-blue-800">Remove coupon</button>
+        </form>
+    </div>
+    {% endif %}
+
+    <div class="mt-6 space-y-4">
+        <div class="flex justify-between">
+            <span class="text-sm text-text-secondary">Subtotal</span>
+            <span class="text-sm">₹{{ cart.subtotal_price|floatformat:2 }}</span>
+        </div>
+        
+        {% if applied_coupon %}
+        <div class="flex justify-between">
+            <span class="text-sm text-text-secondary">Discount</span>
+            <span class="text-sm text-green-600">-₹{{ applied_coupon.discount_amount|floatformat:2 }}</span>
+        </div>
+        {% endif %}
+        
+        <div class="border-t border-gray-200 pt-4">
+            <div class="flex justify-between font-medium">
+                <span>Total</span>
+                <span>₹{{ cart.total_price|floatformat:2 }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-6">
+        <a href="{% url 'orders:checkout' %}" class="w-full flex justify-center items-center px-6 py-3 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800">
+            Proceed to checkout
+        </a>
+    </div>
+</div>

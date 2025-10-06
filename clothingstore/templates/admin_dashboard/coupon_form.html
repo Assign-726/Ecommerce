@@ -1,0 +1,185 @@
+{% extends 'admin_dashboard/base.html' %}
+{% load static crispy_forms_tags %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold">{{ page_title }}</h1>
+        <p class="text-gray-600">Create or update coupon details</p>
+    </div>
+
+    <div class="bg-white rounded shadow p-6">
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Left Column -->
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Code *</label>
+                        {{ form.code }}
+                        {% if form.code.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.code.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Description</label>
+                        {{ form.description }}
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Discount Type *</label>
+                        {{ form.discount_type }}
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">
+                                Discount Value *
+                                <span id="discount_symbol" class="ml-1">
+                                    {% if form.discount_type.value == 'percentage' %}%{% else %}₹{% endif %}
+                                </span>
+                            </label>
+                            {{ form.discount_value }}
+                            {% if form.discount_value.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.discount_value.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <div id="max_discount_field">
+                            <label class="block text-sm font-medium text-gray-700">Max Discount (₹)</label>
+                            {{ form.max_discount }}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Right Column -->
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Minimum Order Amount (₹)</label>
+                        {{ form.min_order_amount }}
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Valid From *</label>
+                            {{ form.valid_from }}
+                            {% if form.valid_from.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.valid_from.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Valid To *</label>
+                            {{ form.valid_to }}
+                            {% if form.valid_to.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.valid_to.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Usage Limit</label>
+                        {{ form.usage_limit }}
+                        <p class="mt-1 text-xs text-gray-500">Leave empty for unlimited usage</p>
+                    </div>
+                    
+                    <div class="pt-2">
+                        <label class="flex items-center">
+                            {{ form.is_active }}
+                            <span class="ml-2 text-sm text-gray-700">Active</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="pt-6 border-t border-gray-200">
+                <div class="flex justify-end space-x-3">
+                    <a href="{% url 'admin_dashboard:coupon_list' %}" 
+                       class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                        Cancel
+                    </a>
+                    <button type="submit" 
+                            class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
+                        {{ coupon.id|yesno:'Update Coupon,Create Coupon' }}
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Toggle max discount field based on discount type
+    function toggleMaxDiscount() {
+        const discountType = document.getElementById('id_discount_type').value;
+        const maxDiscountField = document.getElementById('max_discount_field');
+        
+        if (discountType === 'percentage') {
+            maxDiscountField.style.display = 'block';
+        } else {
+            maxDiscountField.style.display = 'none';
+        }
+    }
+    
+    // Handle datetime input changes
+    function handleDateChange(input, fieldType) {
+        // If this is the 'from' field and 'to' is empty or before 'from', update 'to' field
+        if (fieldType === 'from') {
+            const selectedDate = new Date(input.value);
+            const toInput = document.querySelector('input[name="valid_to"]');
+            
+            if (!toInput.value || new Date(toInput.value) <= selectedDate) {
+                // Set 'to' date to 1 hour after 'from' date
+                const oneHourLater = new Date(selectedDate);
+                oneHourLater.setHours(oneHourLater.getHours() + 1);
+                
+                // Format as YYYY-MM-DDTHH:MM
+                const pad = num => num.toString().padStart(2, '0');
+                const formattedDate = `${oneHourLater.getFullYear()}-${pad(oneHourLater.getMonth() + 1)}-${pad(oneHourLater.getDate())}T${pad(oneHourLater.getHours())}:${pad(oneHourLater.getMinutes())}`;
+                
+                toInput.value = formattedDate;
+            }
+        }
+    }
+    
+    // Initialize datetime inputs with current time in local timezone
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initial toggle for discount type
+        toggleMaxDiscount();
+        
+        // Set up event listeners
+        const discountType = document.getElementById('id_discount_type');
+        discountType.addEventListener('change', function() {
+            toggleMaxDiscount();
+            // Update the symbol next to discount value
+            const symbol = this.value === 'percentage' ? '%' : '₹';
+            document.getElementById('discount_symbol').textContent = symbol;
+        });
+        
+        // Auto-format code to uppercase
+        const codeInput = document.getElementById('id_code');
+        if (codeInput) {
+            codeInput.addEventListener('input', function() {
+                this.value = this.value.toUpperCase();
+            });
+        }
+        
+        // Initialize datetime-local inputs with current time
+        const datetimeInputs = document.querySelectorAll('input[type="datetime-local"]');
+        const now = new Date();
+        const pad = num => num.toString().padStart(2, '0');
+        const currentDateTime = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+        
+        datetimeInputs.forEach(input => {
+            // If the input doesn't have a value, set it to now
+            if (!input.value) {
+                input.value = currentDateTime;
+            }
+        });
+    });
+</script>
+{% endblock %}

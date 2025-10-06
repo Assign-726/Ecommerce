@@ -1,0 +1,178 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block page_title %}Edit Banner{% endblock %}
+{% block page_description %}Update banner information and settings{% endblock %}
+
+{% block content %}
+<div class="animate-fade-in">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Edit Banner</h1>
+            <p class="text-gray-600 mt-1">Update "{{ banner.title }}" banner</p>
+        </div>
+        <a href="{% url 'admin_dashboard:banner_list' %}" 
+           class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors inline-flex items-center space-x-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            </svg>
+            <span>Back to Banners</span>
+        </a>
+    </div>
+
+    <!-- Form -->
+    <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+        <form method="post" enctype="multipart/form-data" class="p-6">
+            {% csrf_token %}
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Left Column -->
+                <div class="space-y-6">
+                    <!-- Basic Information -->
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Basic Information</h3>
+                        
+                        <div class="space-y-4">
+                            <!-- Title -->
+                            <div>
+                                <label for="title" class="block text-sm font-medium text-gray-700 mb-2">Title *</label>
+                                <input type="text" id="title" name="title" value="{{ banner.title }}" required
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all">
+                            </div>
+                            
+                            <!-- Description -->
+                            <div>
+                                <label for="description" class="block text-sm font-medium text-gray-700 mb-2">Description *</label>
+                                <textarea id="description" name="description" rows="4" required
+                                          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all">{{ banner.description }}</textarea>
+                            </div>
+                            
+                            <!-- Current Image -->
+                            {% if banner.image %}
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Current Image</label>
+                                <div class="mb-4">
+                                    <img src="{{ banner.image.url }}" alt="{{ banner.title }}" 
+                                         class="w-full h-32 object-cover rounded-lg border border-gray-300">
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            <!-- New Image -->
+                            <div>
+                                <label for="image" class="block text-sm font-medium text-gray-700 mb-2">
+                                    {% if banner.image %}Update Image (optional){% else %}Banner Image *{% endif %}
+                                </label>
+                                <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-primary transition-colors">
+                                    <div class="space-y-1 text-center">
+                                        <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                                            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                        </svg>
+                                        <div class="flex text-sm text-gray-600">
+                                            <label for="image" class="relative cursor-pointer bg-white rounded-md font-medium text-primary hover:text-primary-dark focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary">
+                                                <span>Upload a file</span>
+                                                <input id="image" name="image" type="file" accept="image/*" {% if not banner.image %}required{% endif %} class="sr-only">
+                                            </label>
+                                            <p class="pl-1">or drag and drop</p>
+                                        </div>
+                                        <p class="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
+                                        <p class="text-xs text-gray-500">Recommended: 1920x600px</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Right Column -->
+                <div class="space-y-6">
+                    <!-- Display Settings -->
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Display Settings</h3>
+                        
+                        <div class="space-y-4">
+                            <!-- Status -->
+                            <div class="flex items-center">
+                                <input type="checkbox" id="is_active" name="is_active" {% if banner.is_active %}checked{% endif %}
+                                       class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded">
+                                <label for="is_active" class="ml-2 block text-sm text-gray-700">
+                                    Active (show on website)
+                                </label>
+                            </div>
+                            
+                            <!-- Order -->
+                            <div>
+                                <label for="order" class="block text-sm font-medium text-gray-700 mb-2">Display Order</label>
+                                <input type="number" id="order" name="order" value="{{ banner.order }}" min="0"
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all">
+                                <p class="text-xs text-gray-500 mt-1">Lower numbers appear first</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Animation Settings -->
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Animation Settings</h3>
+                        
+                        <div class="space-y-4">
+                            <!-- Animation Type -->
+                            <div>
+                                <label for="animation_type" class="block text-sm font-medium text-gray-700 mb-2">Animation Type</label>
+                                <select id="animation_type" name="animation_type"
+                                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all">
+                                    {% for value, label in animation_choices %}
+                                        <option value="{{ value }}" {% if value == banner.animation_type %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <!-- Animation Duration -->
+                            <div>
+                                <label for="animation_duration" class="block text-sm font-medium text-gray-700 mb-2">Animation Duration (ms)</label>
+                                <input type="number" id="animation_duration" name="animation_duration" value="{{ banner.animation_duration }}" min="1000" max="10000" step="500"
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all">
+                                <p class="text-xs text-gray-500 mt-1">Duration in milliseconds (1000-10000)</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Link Settings -->
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Link Settings (Optional)</h3>
+                        
+                        <div class="space-y-4">
+                            <!-- Link URL -->
+                            <div>
+                                <label for="link_url" class="block text-sm font-medium text-gray-700 mb-2">Link URL</label>
+                                <input type="url" id="link_url" name="link_url" value="{{ banner.link_url|default:'' }}"
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all"
+                                       placeholder="https://example.com/collection">
+                            </div>
+                            
+                            <!-- Link Text -->
+                            <div>
+                                <label for="link_text" class="block text-sm font-medium text-gray-700 mb-2">Button Text</label>
+                                <input type="text" id="link_text" name="link_text" value="{{ banner.link_text }}"
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all"
+                                       placeholder="Shop Now">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Form Actions -->
+            <div class="flex items-center justify-end space-x-4 mt-8 pt-6 border-t border-gray-200">
+                <a href="{% url 'admin_dashboard:banner_list' %}" 
+                   class="px-6 py-3 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                    Cancel
+                </a>
+                <button type="submit" 
+                        class="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors font-semibold">
+                    Update Banner
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
